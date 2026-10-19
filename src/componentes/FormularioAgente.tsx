@@ -1,0 +1,182 @@
+import { useState, type FormEvent } from 'react'
+import { usarDatos } from '@/datos/DatosProvider'
+import { ACCIONES_EXTERNAS, HERRAMIENTAS, MODELOS } from '@/datos/catalogo'
+import type { Agente } from '@/datos/tipos'
+import { Boton, Subtitulo, claseCampo } from './ui'
+
+// La "plantilla" de agente. Sirve para editar uno existente y (en el Paso 8) para crear uno nuevo.
+export type DatosAgente = Pick<
+  Agente,
+  | 'nombre'
+  | 'rol'
+  | 'color'
+  | 'instrucciones'
+  | 'herramientas'
+  | 'modelo'
+  | 'acciones_con_aprobacion'
+  | 'tareas_recurrentes'
+  | 'tope_gasto_usd'
+  | 'skin_avatar'
+  | 'skin_modelo'
+>
+
+interface Props {
+  inicial: DatosAgente
+  textoBoton: string
+  cuentasIniciales: string[]
+  alGuardar: (datos: DatosAgente, cuentas: string[]) => Promise<string | null>
+}
+
+export default function FormularioAgente({ inicial, textoBoton, cuentasIniciales, alGuardar }: Props) {
+  const { clientes } = usarDatos()
+  const [cuentas, setCuentas] = useState<string[]>(cuentasIniciales)
+  const [datos, setDatos] = useState<DatosAgente>(inicial)
+  const [recurrentes, setRecurrentes] = useState(
+    (inicial.tareas_recurrentes as { texto?: string }[]).map((t) => t.texto ?? '').join('\n')
+  )
+  const [mensaje, setMensaje] = useState<string | null>(null)
+  const [guardando, setGuardando] = useState(false)
+
+  const cambiar = <K extends keyof DatosAgente>(campo: K, valor: DatosAgente[K]) => setDatos((d) => ({ ...d, [campo]: valor }))
+
+  const alternarHerramienta = (id: string) =>
+    cambiar('herramientas', datos.herramientas.includes(id) ? datos.herramientas.filter((h) => h !== id) : [...datos.herramientas, id])
+
+  async function enviar(e: FormEvent) {
+    e.preventDefault()
+    setGuardando(true)
+    const tareas_recurrentes = recurrentes
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((texto) => ({ texto }))
+    const error = await alGuardar({
+      ...datos,
+      tareas_recurrentes,
+      // Todas las acciones externas pasan por aprobación, sin excepción.
+      acciones_con_aprobacion: ACCIONES_EXTERNAS.map((a) => a.id)
+    }, cuentas)
+    setMensaje(error ? `Error: ${error}` : '¡Guardado!')
+    setGuardando(false)
+  }
+
+  return (
+    <form onSubmit={enviar} className="grid grid-cols-2 gap-6">
+      <div className="space-y-4">
+        <Campo texto="Nombre">
+          <input required value={datos.nombre} onChange={(e) => cambiar('nombre', e.target.value)} className={claseCampo} />
+        </Campo>
+        <Campo texto="Rol">
+          <input required value={datos.rol} onChange={(e) => cambiar('rol', e.target.value)} placeholder="Trafficker, Copywriter, Analista…" className={claseCampo} />
+        </Campo>
+        <div className="grid grid-cols-2 gap-3">
+
+          <Campo texto="Color del personaje">
+            <input type="color" value={datos.color} onChange={(e) => cambiar('color', e.target.value)} className="h-10 w-full cursor-pointer rounded-xl bg-panel-claro" />
+          </Campo>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Campo texto="Modelo de IA">
+            <select value={datos.modelo} onChange={(e) => cambiar('modelo', e.target.value)} className={claseCampo}>
+              {MODELOS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.texto}
+                </option>
+              ))}
+            </select>
+          </Campo>
+          <Campo texto="Tope de gasto mensual (USD)">
+            <input
+              type="number"
+              min={0}
+              step={0.5}
+              value={datos.tope_gasto_usd}
+              onChange={(e) => cambiar('tope_gasto_usd', Number(e.target.value))}
+              className={claseCampo}
+            />
+          </Campo>
+        </div>
+        <Campo texto="Instrucciones (cómo trabaja este agente)">
+          <textarea rows={6} value={datos.instrucciones} onChange={(e) => cambiar('instrucciones', e.target.value)} className={claseCampo} />
+        </Campo>
+        <Campo texto="Tareas recurrentes (una por línea)">
+          <textarea
+            rows={3}
+            value={recurrentes}
+            onChange={(e) => setRecurrentes(e.target.value)}
+            placeholder={'Cada lunes: reporte semanal de campañas'}
+            className={claseCampo}
+          />
+        </Campo>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <Subtitulo>Cuentas que lleva</Subtitulo>
+          <div className="flex flex-wrap gap-1.5">
+            {clientes.map((c) => {
+              const lleva = cuentas.includes(c.id)
+              return (
+                <button
+                  type="button"
+                  key={c.id}
+                  onClick={() => setCuentas((l) => (lleva ? l.filter((x) => x !== c.id) : [...l, c.id]))}
+                  className={`rounded-lg border-2 px-3 py-1.5 text-sm font-black transition ${lleva ? 'border-white text-noche' : 'border-white/20 bg-black/30 text-white/60'}`}
+                  style={lleva ? { background: c.color } : undefined}
+                >
+                  {lleva ? '✓ ' : ''}
+                  {c.nombre}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        <div>
+          <Subtitulo>Herramientas</Subtitulo>
+          <div className="space-y-1">
+            {HERRAMIENTAS.map((h) => (
+              <label key={h.id} className="flex cursor-pointer items-center gap-2 rounded-lg bg-panel-claro px-3 py-2 text-sm font-bold">
+                <input type="checkbox" checked={datos.herramientas.includes(h.id)} onChange={() => alternarHerramienta(h.id)} className="h-4 w-4 accent-oro" />
+                {h.texto}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div>
+          <Subtitulo>Acciones que necesitan tu aprobación</Subtitulo>
+          <div className="space-y-1">
+            {ACCIONES_EXTERNAS.map((a) => (
+              <div key={a.id} className="flex items-center gap-2 rounded-lg bg-black/20 px-3 py-2 text-sm font-bold text-white/70">
+                🔒 {a.texto}
+              </div>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-white/40">Siempre activas: ningún agente puede hacer esto sin que lo apruebes.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Campo texto="Skin avatar (.png)">
+            <input value={datos.skin_avatar ?? ''} onChange={(e) => cambiar('skin_avatar', e.target.value || null)} placeholder="Luego" className={claseCampo} />
+          </Campo>
+          <Campo texto="Skin 3D (.glb)">
+            <input value={datos.skin_modelo ?? ''} onChange={(e) => cambiar('skin_modelo', e.target.value || null)} placeholder="Luego" className={claseCampo} />
+          </Campo>
+        </div>
+        <div className="flex items-center gap-3 pt-2">
+          <Boton type="submit" disabled={guardando}>
+            {guardando ? 'Guardando…' : textoBoton}
+          </Boton>
+          {mensaje && <span className={`font-bold ${mensaje.startsWith('Error') ? 'text-alerta' : 'text-vida'}`}>{mensaje}</span>}
+        </div>
+      </div>
+    </form>
+  )
+}
+
+function Campo({ texto, children }: { texto: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-black tracking-wider text-white/60 uppercase">{texto}</span>
+      {children}
+    </label>
+  )
+}

@@ -1,0 +1,14 @@
+node_modules/
+out/
+dist/
+release/
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+*.log
+
+# Locales de herramientas (no se suben)
+.claude/settings.local.json
+supabase/.temp/

@@ -84,16 +84,35 @@ ipcMain.handle('recepcion:enviar', async (_evento, texto: unknown, token: unknow
 })
 
 // Un empleado empieza a trabajar una tarea (la pantalla lo pide cuando hay tareas pendientes asignadas)
-ipcMain.handle('agentes:trabajar', async (_evento, tareaId: unknown, agenteId: unknown, token: unknown) => {
-  if (typeof tareaId !== 'string' || typeof agenteId !== 'string' || typeof token !== 'string') return { ok: false }
-  if (enCurso.has(tareaId)) return { ok: true }
+// Si piden una tarea que aún está en curso (p. ej. el supervisor la devolvió mientras terminaba su revisión),
+// se apunta y se vuelve a lanzar en cuanto acabe, en vez de perder el aviso.
+const repetir = new Map<string, string>() // tareaId -> token más reciente
+
+function encolarTarea(tareaId: string, agenteId: string, token: string) {
+  if (enCurso.has(tareaId)) {
+    repetir.set(tareaId, token)
+    return
+  }
   enCurso.add(tareaId)
   const anterior = colas.get(agenteId) ?? Promise.resolve()
   const turno = anterior
     .then(() => trabajarTarea(tareaId, token))
     .catch((e) => console.error('[empleado]', e))
-    .finally(() => enCurso.delete(tareaId))
+    .finally(() => {
+      enCurso.delete(tareaId)
+      const tokenNuevo = repetir.get(tareaId)
+      if (tokenNuevo) {
+        repetir.delete(tareaId)
+        // trabajarTarea solo la coge si sigue "pendiente", así que repetir es seguro
+        encolarTarea(tareaId, agenteId, tokenNuevo)
+      }
+    })
   colas.set(agenteId, turno)
+}
+
+ipcMain.handle('agentes:trabajar', async (_evento, tareaId: unknown, agenteId: unknown, token: unknown) => {
+  if (typeof tareaId !== 'string' || typeof agenteId !== 'string' || typeof token !== 'string') return { ok: false }
+  encolarTarea(tareaId, agenteId, token)
   return { ok: true }
 })
 

@@ -40,8 +40,9 @@ export async function publicarEnNetlify(trabajo: string): Promise<{ mensaje: str
   const salida = await new Promise<string>((resolve, reject) => {
     const proceso = spawn(
       process.platform === 'win32' ? 'npx.cmd' : 'npx',
-      ['--yes', 'netlify-cli', 'deploy', '--prod', '--dir', destino, '--site', conf.sitio as string, '--json'],
-      { shell: process.platform === 'win32', windowsHide: true, env: { ...process.env, NETLIFY_AUTH_TOKEN: CONFIG.netlifyToken } }
+      // --no-build: es un HTML ya listo; sin esto Netlify intenta "construir" el sitio y falla
+      ['--yes', 'netlify-cli', 'deploy', '--prod', '--no-build', '--dir', destino, '--site', conf.sitio as string, '--json'],
+      { cwd: destino, shell: process.platform === 'win32', windowsHide: true, env: { ...process.env, NETLIFY_AUTH_TOKEN: CONFIG.netlifyToken } }
     )
     let texto = ''
     let errores = ''

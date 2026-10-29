@@ -12,13 +12,14 @@ const dia = (fecha: string | Date) => new Date(fecha).toLocaleDateString('sv') /
 const ESTADOS_ACCION = [
   { estado: 'ejecutada', texto: 'Ejecutadas', color: '#22a55b' },
   { estado: 'pendiente', texto: 'Esperando tu sí', color: '#e0a106' },
-  { estado: 'en_revision', texto: 'En revisión de Rafa IA', color: '#9aa0b4' },
+  { estado: 'en_revision', texto: 'En revisión del supervisor', color: '#9aa0b4' },
   { estado: 'rechazada', texto: 'Rechazadas', color: '#e5484d' },
   { estado: 'fallida', texto: 'Fallaron', color: '#c2410c' }
 ] as const
 
 export default function Analitica() {
   const { tareas, aprobaciones, gastos, agentes, clientes } = usarDatos()
+  const supervisor = agentes.find((a) => a.es_supervisor)?.nombre ?? 'El supervisor'
 
   const datos = useMemo(() => {
     const inicioMes = new Date()
@@ -106,7 +107,7 @@ export default function Analitica() {
       {/* Cifras clave */}
       <div className="mt-5 grid grid-cols-3 gap-3">
         <Cifra valor={String(datos.delMes)} texto="Tareas completadas este mes" detalle={`${datos.totalHechas} en total`} />
-        <Cifra valor={datos.primera === null ? '—' : `${datos.primera}%`} texto="Aprobadas a la primera" detalle="Rafa IA no tuvo que devolverlas" />
+        <Cifra valor={datos.primera === null ? '—' : `${datos.primera}%`} texto="Aprobadas a la primera" detalle={`${supervisor} no tuvo que devolverlas`} />
         <Cifra valor={datos.mediana === null ? '—' : duracion(datos.mediana)} texto="Tiempo típico por tarea" detalle="Desde que se pide hasta que se termina" />
         <Cifra valor={String(datos.ejecutadas)} texto="Acciones reales hechas" detalle="Correos, Drive y Calendar aprobados" />
         <Cifra valor={`$${datos.gastoMes.toFixed(2)}`} texto="Gasto de IA este mes" detalle="Todos los agentes" />

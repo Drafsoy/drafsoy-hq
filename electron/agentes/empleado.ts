@@ -15,6 +15,7 @@ import {
   textoDe,
   type AgenteDb
 } from './comun'
+import { consultarConector } from './conectores'
 import { revisarTarea } from './supervisor'
 
 // Un empleado trabaja una tarea: produce el entregable y, si hace falta tocar algo fuera
@@ -116,6 +117,26 @@ async function producirTrabajo(
     })
   }
 
+  // Consultas reales de solo lectura a Meta Ads y HubSpot (por el Claude Code de esta PC)
+  if (puede('meta_ads')) {
+    herramientas.push({
+      name: 'consultar_meta_ads',
+      description:
+        'Consulta datos REALES de Meta Ads (Facebook e Instagram) de Rafa: cuentas publicitarias, campañas, conjuntos, anuncios, públicos, creatividades, métricas, tendencias y la biblioteca de anuncios. ' +
+        'Solo lectura: no cambia nada. Escribe la consulta en lenguaje natural y con detalle (cuenta o cliente, fechas, métricas). Tarda un poco: agrupa lo que necesites en una sola consulta.',
+      input_schema: { type: 'object', properties: { consulta: { type: 'string' } }, required: ['consulta'] }
+    })
+  }
+  if (puede('hubspot')) {
+    herramientas.push({
+      name: 'consultar_hubspot',
+      description:
+        'Consulta datos REALES del HubSpot de Rafa: contactos, empresas, negocios, etapas del embudo, propietarios, campañas y reportes. ' +
+        'Solo lectura: no cambia nada. Escribe la consulta en lenguaje natural y con detalle. Tarda un poco: agrupa lo que necesites en una sola consulta.',
+      input_schema: { type: 'object', properties: { consulta: { type: 'string' } }, required: ['consulta'] }
+    })
+  }
+
   const system = [
     `Eres ${agente.nombre}, ${agente.rol} en Drafsoy HQ, la agencia de trafficking digital de Rafa. Trabajas en español.`,
     agente.instrucciones,
@@ -130,6 +151,7 @@ async function producirTrabajo(
     '- Si la tarea pide enviar un correo (a un cliente, proveedor…), propone enviar con el texto completo y final del correo. Solo a correos reales que aparezcan en la tarea o en la memoria del cliente; nunca inventes destinatarios.',
     '- Si la tarea pide agendar una reunión, propone agendar_reunion con fecha, hora y correos reales que aparezcan en la tarea o en la memoria del cliente. Nunca inventes correos.',
     '- Tu trabajo lo revisará el supervisor de Rafa antes de llegarle. Si hay notas de revisión anteriores, corrígelas todas.',
+    '- Si tienes consultar_meta_ads o consultar_hubspot, úsalas para trabajar con datos reales antes de recomendar nada. Son de solo lectura: cualquier cambio se propone con proponer_accion.',
     '- Termina siempre llamando a entregar_trabajo.'
   ].join('\n')
 
@@ -190,6 +212,9 @@ async function producirTrabajo(
           })
           if (error) throw new Error(error.message)
           resultados.push({ type: 'tool_result', tool_use_id: uso.id, content: 'Propuesta registrada. Queda en revisión; no se ejecuta nada todavía.' })
+        } else if (uso.name === 'consultar_meta_ads' || uso.name === 'consultar_hubspot') {
+          const texto = await consultarConector(uso.name === 'consultar_meta_ads' ? 'meta' : 'hubspot', String(datos.consulta ?? ''))
+          resultados.push({ type: 'tool_result', tool_use_id: uso.id, content: texto })
         } else if (uso.name === 'guardar_memoria') {
           const { error } = await db.from('memoria_cliente').insert({ cliente_id: tarea.cliente_id, clave: String(datos.clave), contenido: String(datos.contenido) })
           if (error) throw new Error(error.message)

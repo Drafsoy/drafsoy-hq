@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { consultarConector } from './conectores'
 import { COLUMNAS_AGENTE, Contador, crearAnthropic, crearDb, llamarModelo, mensajeError, superaTope, textoDe, type AgenteDb } from './comun'
 
 // Chat directo de Rafa con un empleado. El empleado conoce sus cuentas, la memoria de cada cliente
@@ -121,6 +122,25 @@ async function conversar(db: SupabaseClient, yo: AgenteDb, canal: string, contad
       }
     }
   ]
+  // Consultas reales de solo lectura a Meta Ads y HubSpot (por el Claude Code de esta PC)
+  if (puede('meta_ads')) {
+    herramientas.push({
+      name: 'consultar_meta_ads',
+      description:
+        'Consulta datos REALES de Meta Ads (Facebook e Instagram) de Rafa: cuentas publicitarias, campañas, conjuntos, anuncios, públicos, creatividades, métricas, tendencias y la biblioteca de anuncios. ' +
+        'Solo lectura: no cambia nada. Escribe la consulta en lenguaje natural y con detalle (cuenta o cliente, fechas, métricas). Tarda un poco: agrupa lo que necesites en una sola consulta.',
+      input_schema: { type: 'object', properties: { consulta: { type: 'string' } }, required: ['consulta'] }
+    })
+  }
+  if (puede('hubspot')) {
+    herramientas.push({
+      name: 'consultar_hubspot',
+      description:
+        'Consulta datos REALES del HubSpot de Rafa: contactos, empresas, negocios, etapas del embudo, propietarios, campañas y reportes. ' +
+        'Solo lectura: no cambia nada. Escribe la consulta en lenguaje natural y con detalle. Tarda un poco: agrupa lo que necesites en una sola consulta.',
+      input_schema: { type: 'object', properties: { consulta: { type: 'string' } }, required: ['consulta'] }
+    })
+  }
   if (puede('memoria_cliente') && misClientes.length) {
     herramientas.push({
       name: 'guardar_memoria',
@@ -145,6 +165,7 @@ async function conversar(db: SupabaseClient, yo: AgenteDb, canal: string, contad
     '- Si Rafa te pide un trabajo nuevo, usa apuntar_tarea (no lo hagas en el chat). Si te pide cambiar o seguir una tarea tuya, usa retomar_tarea.',
     '- No puedes enviar, publicar, subir ni agendar nada desde el chat: esas acciones salen de una tarea, las revisa el supervisor y Rafa las aprueba en su bandeja.',
     '- Si Rafa te cuenta un dato duradero de un cliente, guárdalo con guardar_memoria (si la tienes).',
+    '- Si te pregunta por campañas o por el CRM y tienes consultar_meta_ads o consultar_hubspot, consulta los datos reales antes de responder (avísale de que tardas un poco).',
     `Contexto actual (JSON):\n${JSON.stringify(contexto)}`
   ].join('\n')
 
@@ -200,6 +221,8 @@ async function conversar(db: SupabaseClient, yo: AgenteDb, canal: string, contad
             await db.from('agentes').update({ estado: 'disponible' }).eq('id', yo.id)
           }
           contenido = 'Tarea retomada con las indicaciones de Rafa.'
+        } else if (uso.name === 'consultar_meta_ads' || uso.name === 'consultar_hubspot') {
+          contenido = await consultarConector(uso.name === 'consultar_meta_ads' ? 'meta' : 'hubspot', String(datos.consulta ?? ''))
         } else if (uso.name === 'guardar_memoria') {
           if (!misClientes.some((c) => c.id === datos.cliente_id)) throw new Error('Ese cliente no es de tus cuentas.')
           const { error } = await db.from('memoria_cliente').insert({ cliente_id: datos.cliente_id, clave: String(datos.clave), contenido: String(datos.contenido) })

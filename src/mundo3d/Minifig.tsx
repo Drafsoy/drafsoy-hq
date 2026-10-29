@@ -4,11 +4,11 @@ import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Agente } from '@/datos/tipos'
 import { ESTADOS_AGENTE } from '@/datos/tipos'
+import { Avatar } from '@/componentes/ui'
 import { skinDe } from './skins'
 import { posicionesAgentes } from './seguimiento'
 import { GIRO_APROBACIONES, GIRO_SILLA_RAFA, PUNTOS_DESPACHO, PUNTOS_PASEO, PUNTOS_RECEPCION, PUNTO_APROBACIONES, PUNTO_TE_NECESITA, ruta } from './medidas'
 
-const EMOJI_ESTADO = { disponible: '✅', trabajando: '⌨️', te_necesita: '❗', esperando_aprobacion: '⏳' } as const
 const PELOS = ['#3b2414', '#111111', '#e0a43a', '#c0462b', '#6b4a2f']
 const PIERNAS = ['#26315c', '#3a3a3a', '#1f4f8a', '#4a2b6b']
 const VELOCIDAD = 2
@@ -785,16 +785,22 @@ export default function Minifig({ agente, asiento, conSilla, bailando, alClic }:
       </group>
       {/* Globo de estado (se oculta cuando la cámara está lejos) */}
       <Html position={[0, 2.8, 0]} center distanceFactor={22} zIndexRange={[30, 0]}>
-        <div ref={globo} className="pointer-events-none flex flex-col items-center gap-0.5 transition-opacity duration-300 select-none">
+        {/* Pastilla con foto, nombre y estado (mismo estilo que el dashboard) */}
+        <div ref={globo} className="pointer-events-none transition-opacity duration-300 select-none">
           <div
-            className={`rounded-full border-[3px] border-black/40 px-3 py-1 text-[17px] font-black whitespace-nowrap text-noche shadow-lg ${
-              agente.estado === 'te_necesita' ? 'animate-bounce' : ''
-            }`}
-            style={{ background: estado.color }}
+            className={`flex items-center gap-2 rounded-full py-1 pr-3.5 pl-1 whitespace-nowrap shadow-[0_6px_18px_rgb(16_24_40/0.25)] ${
+              agente.estado === 'te_necesita' ? 'animate-bounce bg-alerta text-white' : 'bg-white/95 text-tinta'
+            } ${agente.estado === 'trabajando' ? 'ring-2 ring-violeta' : ''}`}
           >
-            {EMOJI_ESTADO[agente.estado]} {estado.texto}
+            <Avatar nombre={agente.nombre} color={agente.color} foto={agente.skin_avatar} tam={30} />
+            <span className="leading-tight">
+              <span className="block text-[15px] font-bold">{agente.nombre}</span>
+              <span className={`flex items-center gap-1 text-[11px] font-semibold ${agente.estado === 'te_necesita' ? 'text-white/90' : 'text-tinta-suave'}`}>
+                <span className="h-2 w-2 rounded-full" style={{ background: agente.estado === 'te_necesita' ? '#ffffff' : estado.color }} />
+                {estado.texto}
+              </span>
+            </span>
           </div>
-          <div className="titulo-juego text-[22px] whitespace-nowrap text-white">{agente.nombre}</div>
         </div>
       </Html>
     </group>

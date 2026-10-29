@@ -154,7 +154,7 @@ export function Cofre({ posicion, alAbrir }: { posicion: [number, number, number
       ))}
       {!abierto && (
         <Html position={[0, 1.9, 0]} center distanceFactor={14}>
-          <div className="titulo-juego pointer-events-none animate-pulse rounded-lg bg-oro px-2 py-0.5 text-sm whitespace-nowrap text-noche">
+          <div className="pointer-events-none animate-pulse rounded-full bg-lima px-3 py-1 text-sm font-semibold whitespace-nowrap text-tinta shadow-lg">
             ¡Ábreme!
           </div>
         </Html>

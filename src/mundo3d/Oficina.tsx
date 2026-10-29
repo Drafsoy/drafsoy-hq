@@ -2,7 +2,8 @@ import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Html, RoundedBox, Text } from '@react-three/drei'
 import * as THREE from 'three'
-import fuenteJuego from '@fontsource/luckiest-guy/files/luckiest-guy-latin-400-normal.woff?url'
+// Letreros con la misma tipografía del dashboard
+import fuenteJuego from '@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-800-normal.woff?url'
 import type { Agente, Cliente, Tarea } from '@/datos/tipos'
 import Minifig from './Minifig'
 import { Toldo, VentanaRect } from './Detalles'
@@ -798,8 +799,8 @@ function Mesa({
 function PantallaTrabajo({ children }: { children: ReactNode }) {
   return (
     <Html position={[0, 3.4, 0.6]} center distanceFactor={22} zIndexRange={[25, 0]}>
-      <div className="pointer-events-none flex flex-col rounded-lg border-2 border-sky-300/70 bg-noche/85 px-3 py-1.5 whitespace-nowrap text-white shadow-[0_0_18px_rgba(63,182,255,0.6)]">
-        <span className="text-[10px] font-black text-sky-300">💻 TRABAJANDO EN</span>
+      <div className="pointer-events-none flex flex-col rounded-2xl bg-barra/90 px-3 py-1.5 whitespace-nowrap text-white shadow-[0_6px_18px_rgb(16_24_40/0.3)] backdrop-blur">
+        <span className="text-[10px] font-semibold tracking-wider text-lima uppercase">Trabajando en</span>
         {children}
       </div>
     </Html>

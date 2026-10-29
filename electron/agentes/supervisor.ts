@@ -50,7 +50,7 @@ async function revisarTareaYa(db: SupabaseClient, tareaId: string): Promise<void
 
   if (!supervisor) {
     // Sin supervisor no se aprueba nada solo: Rafa decide
-    await aplicar(db, tarea, { decision: 'aprobar', nota: 'Sin supervisor configurado: pasa directo a Rafa.' }, propuestas ?? [], null)
+    await aplicar(db, tarea, { decision: 'aprobar', nota: 'Lista para que la revises tú.' }, propuestas ?? [], null)
     return
   }
 
@@ -212,7 +212,11 @@ async function revisarPropuestasYa(db: SupabaseClient, ids: string[]): Promise<v
   const aRafaConAviso = async (aviso: string) => {
     for (const p of propuestas) await db.from('aprobaciones').update({ estado: 'pendiente', nota_supervisor: `⚠️ Sin revisar: ${aviso}` }).eq('id', p.id)
   }
-  if (!supervisor) return aRafaConAviso('no hay supervisor configurado.')
+  if (!supervisor) {
+    // Sin supervisor: va directo a la bandeja de Rafa, sin avisos de error
+    for (const p of propuestas) await db.from('aprobaciones').update({ estado: 'pendiente', nota_supervisor: null }).eq('id', p.id)
+    return
+  }
   const aviso = await superaTope(db, supervisor)
   if (aviso) return aRafaConAviso(aviso)
 

@@ -33,7 +33,7 @@ export default function Bandeja() {
       <div className="mb-6 pr-12">
         <Titulo color="#3fb6ff">Bandeja de aprobaciones</Titulo>
         <p className="text-tinta/80">
-          Todo pasa primero por {supervisor?.nombre ?? 'tu supervisor'} y luego por ti. Nada sale al mundo exterior sin tu visto bueno.
+          {supervisor ? `Todo pasa primero por ${supervisor.nombre} y luego por ti.` : 'Aquí llega todo lo que tu equipo quiere hacer fuera.'} Nada sale al mundo exterior sin tu visto bueno.
         </p>
         <Boton variante="gris" className="mt-3 text-sm" onClick={crearPrueba}>
           + Aprobación de prueba
@@ -57,7 +57,7 @@ export default function Bandeja() {
       {enRevision.length > 0 && (
         <>
           <Subtitulo>
-            Revisando {supervisor?.nombre ?? 'tu supervisor'} ({enRevision.length})
+            {supervisor ? `Revisando ${supervisor.nombre}` : 'Preparándose'} ({enRevision.length})
           </Subtitulo>
           <div className="mb-8 space-y-2">
             {enRevision.map((a) => (

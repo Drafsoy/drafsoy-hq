@@ -13,7 +13,7 @@ export default function BarraLateral() {
   const { ir } = usarRuta()
 
   const porAprobar = aprobaciones.filter((a) => a.estado === 'pendiente').length
-  const supervisor = agentes.find((a) => a.es_supervisor)?.nombre ?? 'el supervisor'
+  const supervisor = agentes.find((a) => a.es_supervisor)?.nombre ?? null
   const teNecesitan = tareas.filter((t) => t.estado === 'te_necesita')
 
   return (
@@ -29,7 +29,7 @@ export default function BarraLateral() {
                 alPulsar={() => ir({ pantalla: 'bandeja' })}
                 icono={<span className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-lg">📥</span>}
                 titulo={`${porAprobar} ${porAprobar === 1 ? 'acción por aprobar' : 'acciones por aprobar'}`}
-                detalle={`Revisadas por ${supervisor}, esperan tu sí`}
+                detalle={supervisor ? `Revisadas por ${supervisor}, esperan tu sí` : 'Esperan tu sí'}
               />
             )}
             {teNecesitan.map((t) => {

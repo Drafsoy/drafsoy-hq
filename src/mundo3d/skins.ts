@@ -7,12 +7,13 @@ import type { Agente } from '@/datos/tipos'
 export interface Skin {
   piel: string
   pelo: string
-  peinado: 'basico' | 'barrido' | 'trenzasGorra' | 'pez' | 'mono' | 'melena' | 'engominado' | 'capucha' | 'pato' | 'alien'
-  cara: 'sonrisa' | 'picara' | 'alegre' | 'pez' | 'gafas' | 'delineado' | 'cicatriz' | 'perro' | 'pato' | 'alien'
+  peinado: 'basico' | 'barrido' | 'trenzasGorra' | 'pez' | 'mono' | 'melena' | 'engominado' | 'capucha' | 'pato' | 'alien' | 'despeinado'
+  cara: 'sonrisa' | 'picara' | 'alegre' | 'pez' | 'gafas' | 'delineado' | 'cicatriz' | 'perro' | 'pato' | 'alien' | 'mascara'
   cabeza?: 'esfera' | 'alien' // cabeza redonda u ovalada en vez del cilindro LEGO
   gorra?: string // gorra, sombrero o capucha
   gafas?: string // montura de las gafas
   collar?: string // gargantilla
+  bufanda?: string // bufanda gruesa al cuello (con la cola por detrás)
   torso: string
   torsoMapa?: THREE.Texture // estampado envolvente: [lado der., espalda, lado izq., frente]
   brazos: string
@@ -460,6 +461,96 @@ function platanos(): THREE.Texture {
   )
 }
 
+// ---------- Deriva: chaqueta magenta con capucha ----------
+
+function torsoDeriva(): THREE.Texture {
+  return textura((c, panel, H) => {
+    const xe = panel
+    const xf = panel * 3
+    c.fillStyle = '#c0207f'
+    c.fillRect(0, 0, panel * 4, H)
+    // Cintura negra con franja blanca
+    c.fillStyle = '#1c1c1f'
+    c.fillRect(0, 0.86 * H, panel * 4, 0.14 * H)
+    c.fillStyle = '#f2f2f2'
+    c.fillRect(0, 0.84 * H, panel * 4, 0.04 * H)
+    // Espalda: dos franjas negras en diagonal
+    c.strokeStyle = '#1c1c1f'
+    c.lineWidth = 12
+    trazo(c, xe, panel, H, [[0.2, 0.1], [0.45, 0.8]])
+    trazo(c, xe, panel, H, [[0.8, 0.1], [0.55, 0.8]])
+    // Frente: cremallera, cuello, bolsillo de pecho con cierre amarillo y bolsillo con solapa
+    c.lineWidth = 4
+    trazo(c, xf, panel, H, [[0.5, 0], [0.5, 0.84]])
+    trazo(c, xf, panel, H, [[0.3, 0], [0.42, 0.14], [0.5, 0.06], [0.58, 0.14], [0.7, 0]])
+    c.strokeRect(xf + 0.6 * panel, 0.22 * H, 0.2 * panel, 0.3 * H)
+    c.fillStyle = '#f5b301'
+    c.fillRect(xf + 0.68 * panel, 0.25 * H, 6, 0.22 * H)
+    c.strokeRect(xf + 0.12 * panel, 0.52 * H, 0.28 * panel, 0.24 * H)
+    trazo(c, xf, panel, H, [[0.12, 0.6], [0.4, 0.6]])
+  })
+}
+
+function pantalonDeriva(): THREE.Texture {
+  return textura(
+    (c, _panel, H) => {
+      c.fillStyle = '#1c1c1f'
+      c.fillRect(0, 0, H, H)
+      c.fillStyle = '#c0207f'
+      c.fillRect(0.55 * H, 0.18 * H, 0.18 * H, 0.08 * H)
+      c.fillStyle = '#f2f2f2'
+      c.beginPath()
+      c.moveTo(0, 0.7 * H)
+      c.lineTo(0.45 * H, 0.62 * H)
+      c.lineTo(0.6 * H, 0.78 * H)
+      c.lineTo(0, 0.86 * H)
+      c.fill()
+      c.strokeStyle = '#6b6f78'
+      c.lineWidth = 3
+      c.strokeRect(0.15 * H, 0.3 * H, 0.35 * H, 0.22 * H)
+    },
+    256,
+    256
+  )
+}
+
+// ---------- Rubius: camiseta blanca y vaqueros ----------
+
+function torsoRubius(): THREE.Texture {
+  return textura((c, panel, H) => {
+    const xf = panel * 3
+    c.fillStyle = '#f7f7f7'
+    c.fillRect(0, 0, panel * 4, H)
+    // Pliegues suaves de la camiseta
+    c.strokeStyle = '#c9ccd2'
+    c.lineWidth = 3
+    trazo(c, xf, panel, H, [[0.18, 0.62], [0.42, 0.72]])
+    trazo(c, xf, panel, H, [[0.6, 0.7], [0.84, 0.6]])
+    trazo(c, panel, panel, H, [[0.3, 0.6], [0.55, 0.66]])
+    // Cintura del vaquero
+    c.fillStyle = '#26386b'
+    c.fillRect(0, 0.9 * H, panel * 4, 0.1 * H)
+  })
+}
+
+function vaquerosRubius(): THREE.Texture {
+  return textura(
+    (c, _panel, H) => {
+      c.fillStyle = '#2b3f78'
+      c.fillRect(0, 0, H, H)
+      c.fillStyle = 'rgba(255,255,255,0.05)'
+      for (let y = 0; y < H; y += 6) c.fillRect(0, y, H, 2)
+      c.strokeStyle = '#1a2850'
+      c.lineWidth = 3
+      c.beginPath()
+      c.arc(0.1 * H, 0.05 * H, 0.35 * H, 0, Math.PI / 2)
+      c.stroke()
+    },
+    256,
+    256
+  )
+}
+
 const texturas = new Map<string, THREE.Texture>()
 function unaVez(clave: string, crear: () => THREE.Texture): THREE.Texture {
   let t = texturas.get(clave)
@@ -606,6 +697,37 @@ const PRESETS: Record<string, () => Skin> = {
     piernasMapa: unaVez('platanos', platanos),
     botas: '#45c3e0',
     pies: '#7a4a26'
+  }),
+  deriva: () => ({
+    piel: '#f1d0b0',
+    pelo: '#c0207f',
+    peinado: 'capucha',
+    gorra: '#c0207f',
+    cara: 'mascara',
+    torso: '#ffffff',
+    torsoMapa: unaVez('deriva', torsoDeriva),
+    brazos: '#1c1c1f',
+    manos: '#1c1c1f',
+    cadera: '#1c1c1f',
+    piernas: '#1c1c1f',
+    piernasMapa: unaVez('pantalonDeriva', pantalonDeriva),
+    pies: '#f2f2f2'
+  }),
+  rubius: () => ({
+    piel: '#f3d2b4',
+    pelo: '#6b3f22',
+    peinado: 'despeinado',
+    cara: 'picara',
+    bufanda: '#22335f',
+    torso: '#ffffff',
+    torsoMapa: unaVez('rubius', torsoRubius),
+    brazos: '#f3d2b4',
+    manga: '#f7f7f7',
+    manos: '#f3d2b4',
+    cadera: '#26386b',
+    piernas: '#2b3f78',
+    piernasMapa: unaVez('vaqueros', vaquerosRubius),
+    pies: '#f5f5f5'
   })
 }
 

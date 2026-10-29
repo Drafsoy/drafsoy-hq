@@ -347,6 +347,25 @@ export default function Minifig({ agente, asiento, conSilla, bailando, alClic }:
             <cylinderGeometry args={skin.cabeza === 'alien' ? [0.08, 0.1, 0.16, 12] : [0.12, 0.12, 0.1, 12]} />
             {plastico(skin.piel)}
           </mesh>
+          {skin.bufanda && (
+            <group>
+              {/* Bufanda gruesa con puntos claros y la cola por la espalda */}
+              <mesh position-y={0.05} rotation-x={Math.PI / 2}>
+                <torusGeometry args={[0.17, 0.075, 10, 22]} />
+                <meshStandardMaterial color={skin.bufanda} roughness={0.6} />
+              </mesh>
+              {[-0.08, 0, 0.08].map((x) => (
+                <mesh key={x} position={[x, 0.05, 0.24]}>
+                  <sphereGeometry args={[0.018, 8, 6]} />
+                  <meshStandardMaterial color="#c9d2e8" />
+                </mesh>
+              ))}
+              <mesh position={[0.03, -0.22, -0.27]} rotation-z={0.08}>
+                <boxGeometry args={[0.1, 0.42, 0.04]} />
+                <meshStandardMaterial color={skin.bufanda} roughness={0.6} />
+              </mesh>
+            </group>
+          )}
           {skin.collar && (
             <mesh position-y={0.05} rotation-x={Math.PI / 2}>
               <torusGeometry args={[0.125, 0.025, 8, 20]} />
@@ -581,6 +600,54 @@ export default function Minifig({ agente, asiento, conSilla, bailando, alClic }:
                 <meshStandardMaterial color="#d9612a" roughness={0.3} />
               </mesh>
             </>
+          ) : skin.cara === 'mascara' ? (
+            <>
+              {/* Máscara blanca de zorro con orejas, ojos rasgados y marcas rojas */}
+              <mesh position={[0, 0.33, 0.12]} scale={[1, 1.08, 0.6]}>
+                <sphereGeometry args={[0.27, 24, 18]} />
+                <meshStandardMaterial color="#f7f5f2" roughness={0.25} />
+              </mesh>
+              <mesh position={[0, 0.24, 0.29]} scale={[1.2, 0.8, 0.9]}>
+                <sphereGeometry args={[0.06, 12, 10]} />
+                <meshStandardMaterial color="#f7f5f2" roughness={0.25} />
+              </mesh>
+              {[-1, 1].map((lado) => (
+                <group key={lado}>
+                  {/* Oreja: blanca por fuera, rosa por dentro */}
+                  <mesh position={[lado * 0.17, 0.8, 0.06]} rotation={[0.15, 0, lado * -0.25]}>
+                    <coneGeometry args={[0.09, 0.26, 4]} />
+                    <meshStandardMaterial color="#f7f5f2" roughness={0.3} />
+                  </mesh>
+                  <mesh position={[lado * 0.17, 0.78, 0.1]} rotation={[0.15, 0, lado * -0.25]}>
+                    <coneGeometry args={[0.05, 0.17, 4]} />
+                    <meshStandardMaterial color="#f29bb8" />
+                  </mesh>
+                  {/* Ojo rasgado con brillo rosa */}
+                  <mesh position={[lado * 0.1, 0.38, 0.285]} rotation-z={lado * 0.35}>
+                    <boxGeometry args={[0.1, 0.035, 0.01]} />
+                    <meshBasicMaterial color="#2a0f1f" />
+                  </mesh>
+                  <mesh position={[lado * 0.1, 0.38, 0.29]} rotation-z={lado * 0.35}>
+                    <boxGeometry args={[0.04, 0.014, 0.01]} />
+                    <meshBasicMaterial color="#ff7bc0" />
+                  </mesh>
+                  {/* Dos marcas rojas en la mejilla */}
+                  {[0, 1].map((i) => (
+                    <mesh key={i} position={[lado * (0.17 + i * 0.025), 0.3 - i * 0.04, 0.265]} rotation-z={lado * -0.6}>
+                      <boxGeometry args={[0.07, 0.014, 0.01]} />
+                      <meshBasicMaterial color="#d6304d" />
+                    </mesh>
+                  ))}
+                </group>
+              ))}
+              {/* Sonrisa dentada */}
+              {[-0.06, -0.02, 0.02, 0.06].map((x, i) => (
+                <mesh key={x} position={[x, 0.17 + (i % 2) * 0.012, 0.285]}>
+                  <boxGeometry args={[0.03, 0.012, 0.01]} />
+                  <meshBasicMaterial color="#2a0f1f" />
+                </mesh>
+              ))}
+            </>
           ) : skin.cara === 'alien' ? (
             <>
               {/* Grandes ojos negros rasgados y media sonrisa */}
@@ -757,6 +824,36 @@ export default function Minifig({ agente, asiento, conSilla, bailando, alClic }:
               <sphereGeometry args={[0.34, 24, 18, Math.PI / 2 + 0.7, Math.PI * 2 - 1.4, 0, Math.PI * 0.8]} />
               <meshStandardMaterial color={skin.gorra ?? '#f5f5f5'} roughness={0.5} side={THREE.DoubleSide} />
             </mesh>
+          ) : skin.peinado === 'despeinado' ? (
+            <group position-y={0.5}>
+              {/* Pelo castaño revuelto: casquete, mechones de punta y flequillo de lado */}
+              <mesh position={[0, 0.07, -0.02]} scale={[1.05, 0.7, 1.08]} castShadow>
+                <sphereGeometry args={[0.31, 22, 16]} />
+                {plastico(skin.pelo)}
+              </mesh>
+              <mesh position={[0, -0.08, -0.12]}>
+                <cylinderGeometry args={[0.29, 0.3, 0.3, 22, 1, false, Math.PI * 0.5, Math.PI]} />
+                {plastico(skin.pelo)}
+              </mesh>
+              {[
+                [-0.2, 0.15, 0.05, 0.4],
+                [-0.08, 0.24, -0.05, 0.1],
+                [0.1, 0.22, -0.1, -0.3],
+                [0.22, 0.12, 0, -0.6],
+                [0, 0.18, -0.24, 0],
+                [-0.18, 0.05, -0.22, 0.6],
+                [0.18, 0.05, -0.22, -0.6]
+              ].map(([x, y, z, giro], i) => (
+                <mesh key={i} position={[x, y, z]} rotation={[-0.5, 0, giro]} castShadow>
+                  <coneGeometry args={[0.09, 0.22, 8]} />
+                  {plastico(i % 2 ? new THREE.Color(skin.pelo).multiplyScalar(0.85).getStyle() : skin.pelo)}
+                </mesh>
+              ))}
+              <mesh position={[0.06, 0.06, 0.2]} rotation={[0.9, 0, -0.5]} scale={[1.4, 0.6, 0.8]} castShadow>
+                <sphereGeometry args={[0.13, 14, 10]} />
+                {plastico(skin.pelo)}
+              </mesh>
+            </group>
           ) : skin.peinado === 'pato' ? (
             // Mechón en la coronilla
             <mesh position={[0, 0.74, -0.03]} rotation-x={-0.35}>

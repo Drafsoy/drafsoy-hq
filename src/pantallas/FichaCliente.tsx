@@ -135,7 +135,7 @@ export default function FichaCliente({ id }: { id: string }) {
 }
 
 // Tarea plegada: solo el título, la prioridad y quién la lleva. La flecha despliega el resto.
-function TarjetaTarea({ tarea }: { tarea: Tarea }) {
+export function TarjetaTarea({ tarea }: { tarea: Tarea }) {
   const { agentes } = usarDatos()
   const [abierta, setAbierta] = useState(false)
   const agente = agentes.find((a) => a.id === tarea.agente_id)

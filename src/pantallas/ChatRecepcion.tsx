@@ -6,7 +6,8 @@ import { usarRuta } from '@/navegacion'
 import { Avatar, Boton, Titulo, claseCampo } from '@/componentes/ui'
 
 // Chat con la recepcionista o, si llega agenteId, chat directo con ese empleado
-export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
+// embebido: dentro de la ficha del empleado (la ficha ya muestra su foto y su nombre arriba)
+export default function ChatRecepcion({ agenteId, embebido = false }: { agenteId?: string; embebido?: boolean }) {
   const { mensajes, agentes } = usarDatos()
   const { ir } = usarRuta()
   const empleado = agenteId ? agentes.find((a) => a.id === agenteId) : undefined
@@ -71,6 +72,7 @@ export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
           <img src={enGrande} alt="Imagen en grande" className="max-h-full max-w-full rounded-xl object-contain" />
         </button>
       )}
+      {!embebido && (
       <div className="flex items-center gap-4 border-b-2 border-linea bg-suave py-4 pr-16 pl-6">
         <Avatar nombre={nombre} color={recepcionista?.color ?? '#ffc93c'} foto={recepcionista?.skin_avatar ?? null} tam={48} />
         <div>
@@ -85,6 +87,7 @@ export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
           </button>
         )}
       </div>
+      )}
 
       <div className="flex-1 space-y-3 overflow-y-auto px-6 py-5">
         {delCanal.length === 0 && (

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Briefcase, Inbox, LogOut, Map, MessageCircle, Settings, UserPlus } from 'lucide-react'
+import { BarChart3, Briefcase, Inbox, LogOut, Map, MessageCircle, Settings, UserPlus } from 'lucide-react'
 import { supabase } from '@/datos/supabase'
 import { usarDatos } from '@/datos/DatosProvider'
 import { usarRuta, type Ruta } from '@/navegacion'
@@ -14,6 +14,7 @@ export default function BarraIconos() {
     { ruta: { pantalla: 'mundo' }, icono: <Map size={20} />, texto: 'Oficina' },
     { ruta: { pantalla: 'chat' }, icono: <MessageCircle size={20} />, texto: 'Recepción' },
     { ruta: { pantalla: 'bandeja' }, icono: <Inbox size={20} />, texto: 'Aprobar', aviso: pendientes },
+    { ruta: { pantalla: 'analitica' }, icono: <BarChart3 size={20} />, texto: 'Analítica' },
     { ruta: { pantalla: 'nuevoAgente' }, icono: <UserPlus size={20} />, texto: 'Contratar' },
     { ruta: { pantalla: 'nuevoCliente' }, icono: <Briefcase size={20} />, texto: 'Nuevo cliente' }
   ]

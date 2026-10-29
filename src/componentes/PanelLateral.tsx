@@ -3,10 +3,10 @@ import { X } from 'lucide-react'
 import { usarRuta } from '@/navegacion'
 
 // Tarjeta grande que ocupa la columna derecha cuando abres una ficha, el chat, la bandeja…
-export default function PanelLateral({ ancho, children }: { ancho: number; children: ReactNode }) {
+export default function PanelLateral({ ancho, maximo = '58%', children }: { ancho: number; maximo?: string; children: ReactNode }) {
   const { ir } = usarRuta()
   return (
-    <div className="tarjeta entrar-derecha relative flex shrink-0 flex-col overflow-hidden" style={{ width: ancho, maxWidth: '58%' }}>
+    <div className="tarjeta entrar-derecha relative flex shrink-0 flex-col overflow-hidden" style={{ width: ancho, maxWidth: maximo }}>
       <button
         onClick={() => ir({ pantalla: 'mundo' })}
         title="Cerrar"

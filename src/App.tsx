@@ -16,6 +16,7 @@ import FichaAgente from '@/pantallas/FichaAgente'
 import Bandeja from '@/pantallas/Bandeja'
 import ChatRecepcion from '@/pantallas/ChatRecepcion'
 import Ajustes from '@/pantallas/Ajustes'
+import Analitica from '@/pantallas/Analitica'
 import NuevoAgente from '@/pantallas/NuevoAgente'
 import NuevoCliente from '@/pantallas/NuevoCliente'
 
@@ -86,6 +87,8 @@ function OficinaLista() {
         return { ancho: 580, contenido: <NuevoCliente />, clave: 'nuevoCliente' }
       case 'ajustes':
         return { ancho: 620, contenido: <Ajustes />, clave: 'ajustes' }
+      case 'analitica':
+        return { ancho: 980, maximo: '72%', contenido: <Analitica />, clave: 'analitica' }
       default:
         return null
     }
@@ -110,7 +113,7 @@ function OficinaLista() {
               {error && <p className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full bg-alerta px-3 py-1 text-sm font-semibold text-white">{error}</p>}
             </div>
             {panel ? (
-              <PanelLateral key={panel.clave} ancho={panel.ancho}>
+              <PanelLateral key={panel.clave} ancho={panel.ancho} maximo={'maximo' in panel ? panel.maximo : undefined}>
                 {panel.contenido}
               </PanelLateral>
             ) : (

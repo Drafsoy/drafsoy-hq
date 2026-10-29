@@ -27,7 +27,8 @@ export default function FichaCliente({ id }: { id: string }) {
 
   const equipo = agentesDeCliente(datos, id)
   const sinCuenta = agentes.filter((a) => !a.es_recepcionista && !equipo.some((e) => e.id === a.id))
-  const tareasCliente = tareas.filter((t) => t.cliente_id === id)
+  // Lo más reciente arriba
+  const tareasCliente = tareas.filter((t) => t.cliente_id === id).sort((a, b) => b.creado_en.localeCompare(a.creado_en))
   const memoriaCliente = memoria.filter((m) => m.cliente_id === id)
 
   const quitar = (agenteId: string) => {

@@ -299,20 +299,44 @@ async function aplicar(
 
   // Aprobado: cada acción propuesta pasa a la bandeja de Rafa (o se rechaza)
   let enBandeja = 0
-  for (const p of propuestas) {
+  const frenadas: string[] = []
+  for (const p of propuestas as { id: string; titulo?: string }[]) {
     const d = v.acciones?.find((a) => a.id === p.id)
     if (d?.decision === 'rechazar') {
-      await db.from('aprobaciones').update({ estado: 'rechazada', comentario: `${firma}${d.nota ?? 'rechazada'}`, resuelto_en: ahora }).eq('id', p.id)
+      const motivo = d.nota ?? 'rechazada'
+      await db.from('aprobaciones').update({ estado: 'rechazada', comentario: `${firma}${motivo}`, resuelto_en: ahora }).eq('id', p.id)
+      frenadas.push(`🛑 "${p.titulo ?? 'Acción'}" no pasó: ${motivo}`)
     } else {
       await db.from('aprobaciones').update({ estado: 'pendiente', nota_supervisor: `${firma}${d?.nota ?? v.nota}` }).eq('id', p.id)
       enBandeja++
     }
   }
+
+  // Si el supervisor frenó una acción que la tarea pedía, no está terminada: Rafa debe decidir o dar los datos que faltan
+  const teNecesita = frenadas.length > 0 && enBandeja === 0
   await db
     .from('tareas')
-    .update({ estado: enBandeja ? 'esperando_aprobacion' : 'completada', revision: `✅ ${firma}${v.nota}` })
+    .update({
+      estado: enBandeja ? 'esperando_aprobacion' : teNecesita ? 'te_necesita' : 'completada',
+      revision: teNecesita
+        ? `${frenadas.join('\n')}\n\n✅ El entregable está aprobado. Responde lo que falta (por ejemplo a Aura en el chat) y la tarea se rehace con esos datos.`
+        : `✅ ${firma}${v.nota}`
+    })
     .eq('id', tarea.id)
-  await db.from('agentes').update({ estado: enBandeja ? 'esperando_aprobacion' : 'disponible' }).eq('id', empleado)
+  await db
+    .from('agentes')
+    .update({ estado: enBandeja ? 'esperando_aprobacion' : teNecesita ? 'te_necesita' : 'disponible' })
+    .eq('id', empleado)
+
+  // Aviso en el chat de recepción para que Rafa se entere sin buscarlo
+  if (teNecesita) {
+    await db.from('mensajes').insert({
+      canal: 'recepcion',
+      rol: 'asistente',
+      contenido: `${supervisor ?? 'El supervisor'} frenó una acción de la tarea "${tarea.titulo}":\n${frenadas.join('\n')}\nDime los datos que faltan y se rehace.`,
+      tarea_id: tarea.id as string
+    })
+  }
 }
 
 // Al arrancar (y de vez en cuando) se retoma lo que un cierre de la app dejó a medias:

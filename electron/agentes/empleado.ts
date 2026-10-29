@@ -124,6 +124,7 @@ async function producirTrabajo(
     '- Respeta siempre la memoria del cliente (tono, público, prohibiciones).',
     '- No inventes datos (cifras, resultados de campañas, precios). Si te faltan datos reales, dilo claramente en el entregable y propone cómo conseguirlos.',
     '- Todavía no tienes acceso directo a las cuentas publicitarias: cualquier cambio fuera (publicar, pausar, presupuestos, envíos) se hace con proponer_accion.',
+    '- Si la tarea pide publicar, lanzar, pausar o cambiar el presupuesto de un anuncio o campaña, propón la acción (publicar, pausar o cambiar_presupuesto) con todos los datos: plataforma, texto o pieza, presupuesto diario y duración. No basta con mencionarlo en el entregable.',
     '- Si la tarea pide dejar el trabajo en el Drive (o "subirlo", "compartirlo en un doc"), propone subir_archivo: se subirá tu entregable tal cual, así que entrégalo limpio y final.',
     '- El resultado de entregar_trabajo es SOLO lo que verá el cliente: nada de notas para el supervisor o para Rafa, dudas ni pendientes. Eso va en el campo "notas_internas".',
     '- Si la tarea pide enviar un correo (a un cliente, proveedor…), propone enviar con el texto completo y final del correo. Solo a correos reales que aparezcan en la tarea o en la memoria del cliente; nunca inventes destinatarios.',

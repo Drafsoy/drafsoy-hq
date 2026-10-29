@@ -49,7 +49,11 @@ const HERRAMIENTAS: Anthropic.Tool[] = [
       type: 'object',
       properties: {
         titulo: { type: 'string', description: 'Título corto y accionable, p. ej. "3 copies para campaña de verano"' },
-        descripcion: { type: 'string', description: 'Detalles del encargo tal como los pidió Rafa' },
+        descripcion: {
+          type: 'string',
+          description:
+            'El encargo COMPLETO tal como lo pidió Rafa, sin resumir: incluye cualquier acción que pida (publicar, enviar, subir al Drive, agendar), importes, plataformas, correos y fechas.'
+        },
         tipo: { type: 'string', description: 'Tipo de trabajo: copy, campaña, reporte, diseño, optimización, estrategia, otro' },
         cliente_id: { type: 'string', description: 'id del cliente (de la lista de clientes)' },
         agente_id: { type: 'string', description: 'id del empleado asignado (de la lista del equipo)' },

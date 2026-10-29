@@ -25,6 +25,7 @@ export const ACCIONES_EXTERNAS = ['enviar', 'publicar', 'pausar', 'cambiar_presu
 // Qué datos necesita cada acción con Google (se explica a los agentes y se comprueba al proponer y al ejecutar)
 export const DATOS_ACCIONES =
   'enviar (envía un correo desde el Gmail de Rafa): detalle.para (correos separados por comas), detalle.asunto, detalle.cuerpo (texto completo del correo, listo para enviar, con saludo y firma "Rafa"); opcional detalle.cc. ' +
+  'publicar en Netlify (sube un trabajo de carpeta ya actualizado, p. ej. un reporte): detalle.plataforma = "netlify" y detalle.trabajo (nombre exacto de la carpeta del trabajo); el sitio y el archivo los pone el propio trabajo. ' +
   'subir_archivo (crea un Google Doc en la carpeta de Drive del cliente con el entregable): detalle.titulo_documento; opcional detalle.carpeta (nombre de una subcarpeta dentro de la del cliente, solo si Rafa la pide). ' +
   'agendar_reunion (crea un evento en Google Calendar e invita por correo): detalle.titulo, detalle.fecha (AAAA-MM-DD), detalle.hora (HH:MM, 24 h), ' +
   'detalle.duracion_minutos, detalle.invitados (correos separados por comas), detalle.descripcion; opcional detalle.zona_horaria (p. ej. America/Lima) y detalle.videollamada ("si"/"no").'
@@ -45,6 +46,9 @@ export function problemaEnDetalle(tipo: string, detalle: Record<string, unknown>
     if (malos.length) return `Correos no válidos: ${malos.join(', ')}`
     if (!String(detalle.asunto ?? '').trim()) return 'Falta detalle.asunto del correo.'
     if (String(detalle.cuerpo ?? '').trim().length < 10) return 'Falta detalle.cuerpo con el texto completo del correo.'
+  }
+  if (tipo === 'publicar' && String(detalle.plataforma ?? '').toLowerCase() === 'netlify' && !String(detalle.trabajo ?? '').trim()) {
+    return 'Para publicar en Netlify falta detalle.trabajo (el nombre de la carpeta del trabajo).'
   }
   if (tipo === 'agendar_reunion') {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(detalle.fecha ?? ''))) return 'detalle.fecha debe ser AAAA-MM-DD.'

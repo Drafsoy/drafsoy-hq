@@ -15,5 +15,7 @@ export const CONFIG = {
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? '',
   // Google Cloud -> Credenciales -> ID de cliente OAuth de tipo "App de escritorio"
   googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
-  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? ''
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+  // Netlify -> User settings -> Applications -> Personal access tokens
+  netlifyToken: process.env.NETLIFY_AUTH_TOKEN ?? ''
 }

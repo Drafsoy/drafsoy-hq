@@ -1,9 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { correosDe, crearDb, problemaEnDetalle } from './comun'
 import { crearDocumento, crearEvento, enviarCorreo, gmailPermitido, googleConectado } from '../google'
+import { publicarEnNetlify } from '../netlify'
 
 // El ejecutor: lo ÚNICO que puede tocar el mundo exterior, y solo después de que Rafa apruebe.
-// Gmail (enviar), Google Drive (subir_archivo) y Google Calendar (agendar_reunion) son reales; el resto sigue simulado.
+// Gmail (enviar), Google Drive (subir_archivo), Google Calendar (agendar_reunion) y publicar en Netlify son reales; el resto sigue simulado.
 
 const CON_GOOGLE = ['enviar', 'subir_archivo', 'agendar_reunion']
 
@@ -132,6 +133,10 @@ async function ejecutar(db: SupabaseClient, a: AprobacionDb): Promise<Record<str
         meet: evento.meet,
         evento_id: evento.id
       }
+    }
+    case 'publicar': {
+      if (String(d.plataforma ?? '').toLowerCase() === 'netlify') return await publicarEnNetlify(String(d.trabajo).trim())
+      return { simulado: true, mensaje: `Simulación: se habría publicado → ${a.titulo}` }
     }
     default:
       return { simulado: true, mensaje: `Simulación: se habría ejecutado "${a.tipo_accion}" → ${a.titulo}` }

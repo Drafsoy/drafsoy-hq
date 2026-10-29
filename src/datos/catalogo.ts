@@ -9,7 +9,8 @@ export const HERRAMIENTAS = [
   { id: 'asignar_tarea', texto: 'Asignar tareas a otros agentes' },
   { id: 'consultar_agenda', texto: 'Consultar la agenda' },
   { id: 'meta_ads', texto: 'Ver Meta Ads (campañas y métricas reales, solo mirar)' },
-  { id: 'hubspot', texto: 'Ver HubSpot (CRM, leads y negocios, solo mirar)' }
+  { id: 'hubspot', texto: 'Ver HubSpot (CRM, leads y negocios, solo mirar)' },
+  { id: 'claude_code', texto: 'Trabajar con archivos en su carpeta (reportes, con Claude Code)' }
 ] as const
 
 // Acciones que tocan el mundo exterior. SIEMPRE pasan por tu aprobación.

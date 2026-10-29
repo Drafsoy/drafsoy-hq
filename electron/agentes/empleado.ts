@@ -15,7 +15,7 @@ import {
   textoDe,
   type AgenteDb
 } from './comun'
-import { consultarConector } from './conectores'
+import { consultarConector, listarTrabajos, trabajarEnCarpeta } from './conectores'
 import { revisarTarea } from './supervisor'
 
 // Un empleado trabaja una tarea: produce el entregable y, si hace falta tocar algo fuera
@@ -118,6 +118,22 @@ async function producirTrabajo(
   }
 
   // Consultas reales de solo lectura a Meta Ads y HubSpot (por el Claude Code de esta PC)
+  // Trabajos en carpeta (reportes y archivos) con el Claude Code de esta PC
+  const trabajos = puede('claude_code') ? listarTrabajos() : []
+  if (trabajos.length) {
+    herramientas.push({
+      name: 'trabajar_en_carpeta',
+      description:
+        'Abre Claude Code dentro de la carpeta de un trabajo (por ejemplo un reporte) para actualizar sus archivos con datos reales de HubSpot y Meta Ads. ' +
+        'Sigue el instructivo de la carpeta, solo edita dentro de ella y NUNCA publica. Puede tardar varios minutos. ' +
+        'En "encargo" pon el pedido completo de Rafa, con todos los datos que haya dado (cifras, fechas, capturas descritas).',
+      input_schema: {
+        type: 'object',
+        properties: { trabajo: { type: 'string', enum: trabajos }, encargo: { type: 'string' } },
+        required: ['trabajo', 'encargo']
+      }
+    })
+  }
   if (puede('meta_ads')) {
     herramientas.push({
       name: 'consultar_meta_ads',
@@ -152,6 +168,7 @@ async function producirTrabajo(
     '- Si la tarea pide agendar una reunión, propone agendar_reunion con fecha, hora y correos reales que aparezcan en la tarea o en la memoria del cliente. Nunca inventes correos.',
     '- Tu trabajo lo revisará el supervisor de Rafa antes de llegarle. Si hay notas de revisión anteriores, corrígelas todas.',
     '- Si tienes consultar_meta_ads o consultar_hubspot, úsalas para trabajar con datos reales antes de recomendar nada. Son de solo lectura: cualquier cambio se propone con proponer_accion.',
+    '- Si tienes trabajar_en_carpeta y la tarea es sobre uno de esos trabajos (p. ej. actualizar un reporte), úsala con el encargo completo. Tu entregable es el resumen que devuelva (cifras, cambios, pendientes). Si la tarea pide publicarlo, propone publicar con detalle.plataforma "netlify" y detalle.trabajo. Si el trabajo dice que falta un dato o que los números no cuadran, no propongas publicar: explícalo en el entregable.',
     '- Termina siempre llamando a entregar_trabajo.'
   ].join('\n')
 
@@ -212,6 +229,9 @@ async function producirTrabajo(
           })
           if (error) throw new Error(error.message)
           resultados.push({ type: 'tool_result', tool_use_id: uso.id, content: 'Propuesta registrada. Queda en revisión; no se ejecuta nada todavía.' })
+        } else if (uso.name === 'trabajar_en_carpeta') {
+          const texto = await trabajarEnCarpeta(String(datos.trabajo ?? ''), String(datos.encargo ?? ''))
+          resultados.push({ type: 'tool_result', tool_use_id: uso.id, content: texto })
         } else if (uso.name === 'consultar_meta_ads' || uso.name === 'consultar_hubspot') {
           const texto = await consultarConector(uso.name === 'consultar_meta_ads' ? 'meta' : 'hubspot', String(datos.consulta ?? ''))
           resultados.push({ type: 'tool_result', tool_use_id: uso.id, content: texto })

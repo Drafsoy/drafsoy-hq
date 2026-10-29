@@ -5,8 +5,8 @@ const api = {
   infoSistema: (): Promise<{ plataforma: string; version: string }> => ipcRenderer.invoke('sistema:info'),
   recepcion: {
     // Envía un encargo a la recepcionista. El token es la sesión de Rafa en Supabase.
-    enviar: (texto: string, token: string): Promise<{ ok: boolean; error?: string }> =>
-      ipcRenderer.invoke('recepcion:enviar', texto, token)
+    enviar: (texto: string, token: string, imagen?: string | null): Promise<{ ok: boolean; error?: string }> =>
+      ipcRenderer.invoke('recepcion:enviar', texto, token, imagen ?? null)
   },
   agentes: {
     // Pide a un empleado que trabaje una tarea pendiente
@@ -15,8 +15,8 @@ const api = {
     // Retoma revisiones y tareas que se quedaron a medias porque la app se cerró
     rescatar: (token: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('agentes:rescatar', token),
     // Le escribes a un empleado en su chat; su respuesta llega como mensaje nuevo
-    charlar: (agenteId: string, texto: string, token: string): Promise<{ ok: boolean; error?: string }> =>
-      ipcRenderer.invoke('agentes:charlar', agenteId, texto, token)
+    charlar: (agenteId: string, texto: string, token: string, imagen?: string | null): Promise<{ ok: boolean; error?: string }> =>
+      ipcRenderer.invoke('agentes:charlar', agenteId, texto, token, imagen ?? null)
   },
   aprobaciones: {
     // Tu decisión en la bandeja; si apruebas, el ejecutor la lleva a cabo

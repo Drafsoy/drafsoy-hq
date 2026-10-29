@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { consultarConector } from './conectores'
-import { COLUMNAS_AGENTE, Contador, crearAnthropic, crearDb, llamarModelo, mensajeError, superaTope, textoDe, type AgenteDb } from './comun'
+import { COLUMNAS_AGENTE, Contador, REGLA_IMAGENES, crearAnthropic, crearDb, historialConImagenes, llamarModelo, mensajeError, superaTope, textoDe, type AgenteDb } from './comun'
 
 // Chat directo de Rafa con un empleado. El empleado conoce sus cuentas, la memoria de cada cliente
 // y sus tareas; puede apuntarse tareas nuevas o retomar una con las indicaciones de Rafa.
@@ -19,10 +19,10 @@ const recorte = (texto: unknown, largo: number) => {
   return t.length > largo ? `${t.slice(0, largo)}…` : t
 }
 
-export async function charlarConEmpleado(agenteId: string, texto: string, token: string): Promise<void> {
+export async function charlarConEmpleado(agenteId: string, texto: string, token: string, imagen: string | null = null): Promise<void> {
   const db = crearDb(token)
   const canal = agenteId
-  await db.from('mensajes').insert({ canal, rol: 'usuario', contenido: texto })
+  await db.from('mensajes').insert({ canal, rol: 'usuario', contenido: texto, imagen })
 
   const { data: agente } = await db.from('agentes').select(COLUMNAS_AGENTE).eq('id', agenteId).maybeSingle()
   if (!agente) {
@@ -55,7 +55,7 @@ async function conversar(db: SupabaseClient, yo: AgenteDb, canal: string, contad
       .eq('agente_id', yo.id)
       .order('actualizado_en', { ascending: false })
       .limit(15),
-    db.from('mensajes').select('rol, contenido').eq('canal', canal).order('creado_en', { ascending: false }).limit(HISTORIAL)
+    db.from('mensajes').select('rol, contenido, imagen').eq('canal', canal).order('creado_en', { ascending: false }).limit(HISTORIAL)
   ])
   const idsClientes = (asignaciones ?? []).map((a) => a.cliente_id as string)
   const [{ data: clientes }, { data: memoria }] = idsClientes.length
@@ -159,6 +159,7 @@ async function conversar(db: SupabaseClient, yo: AgenteDb, canal: string, contad
     'Cómo hablas:',
     '- En español, cercano y breve (2 a 6 frases salvo que Rafa pida detalle). Formato sencillo: **negrita** y listas con "- ".',
     '- Rafa no es programador: explica las cosas fácil.',
+    REGLA_IMAGENES,
     '- Responde sobre tus clientes y tus tareas con los datos del contexto. Si algo no está ahí, dilo; no inventes cifras ni resultados.',
     '- Si una tarea "te necesita", explica en palabras simples qué pasó y qué decisión necesitas de Rafa.',
     'Qué puedes hacer:',
@@ -169,16 +170,8 @@ async function conversar(db: SupabaseClient, yo: AgenteDb, canal: string, contad
     `Contexto actual (JSON):\n${JSON.stringify(contexto)}`
   ].join('\n')
 
-  // Historial del chat (el último mensaje es el de Rafa); los avisos del sistema no se le pasan al modelo
-  const messages: Anthropic.Beta.BetaMessageParam[] = []
-  for (const m of (historial ?? []).reverse()) {
-    if (m.rol === 'sistema') continue
-    const role = m.rol === 'usuario' ? 'user' : 'assistant'
-    const ultimo = messages[messages.length - 1]
-    if (ultimo?.role === role) ultimo.content = `${ultimo.content}\n\n${m.contenido}`
-    else messages.push({ role, content: String(m.contenido) })
-  }
-  while (messages.length && messages[0].role !== 'user') messages.shift()
+  // Historial del chat (el último mensaje es el de Rafa), con sus imágenes; los avisos del sistema no se pasan
+  const messages = historialConImagenes(historial ?? []) as Anthropic.Beta.BetaMessageParam[]
 
   const anthropic = crearAnthropic()
   let tareaCreada: string | null = null

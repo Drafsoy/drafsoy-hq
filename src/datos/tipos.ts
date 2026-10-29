@@ -88,6 +88,7 @@ export interface Mensaje {
   canal: string
   rol: 'usuario' | 'asistente' | 'sistema'
   contenido: string
+  imagen: string | null
   tarea_id: string | null
   creado_en: string
 }

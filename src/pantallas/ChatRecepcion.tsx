@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ClipboardEvent, type FormEvent } from 'react'
+import { Paperclip, X } from 'lucide-react'
 import { supabase } from '@/datos/supabase'
 import { usarDatos } from '@/datos/DatosProvider'
 import { usarRuta } from '@/navegacion'
@@ -16,7 +17,28 @@ export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
   const [texto, setTexto] = useState('')
   const [pensando, setPensando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [imagen, setImagen] = useState<string | null>(null)
+  const [enGrande, setEnGrande] = useState<string | null>(null)
   const final = useRef<HTMLDivElement>(null)
+  const archivo = useRef<HTMLInputElement>(null)
+
+  const adjuntar = async (f: File | null | undefined) => {
+    if (!f || !f.type.startsWith('image/')) return
+    try {
+      setImagen(await reducirImagen(f))
+    } catch {
+      setError('No pude leer esa imagen.')
+    }
+  }
+
+  // Pegar una captura con Ctrl+V directamente en el chat
+  const alPegar = (e: ClipboardEvent) => {
+    const item = [...e.clipboardData.items].find((i) => i.type.startsWith('image/'))
+    if (item) {
+      e.preventDefault()
+      adjuntar(item.getAsFile())
+    }
+  }
 
   useEffect(() => {
     final.current?.scrollIntoView({ behavior: 'smooth' })
@@ -24,23 +46,31 @@ export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
 
   async function enviar(e: FormEvent) {
     e.preventDefault()
-    const contenido = texto.trim()
+    const contenido = texto.trim() || (imagen ? 'Te mando esta imagen.' : '')
     if (!contenido || pensando) return
+    const adjunta = imagen
     setTexto('')
+    setImagen(null)
     setError(null)
     setPensando(true)
     // El cerebro guarda tu mensaje, piensa la respuesta con la IA y crea las tareas
     const { data } = await supabase.auth.getSession()
     const token = data.session?.access_token ?? ''
     const resultado = empleado
-      ? await window.drafsoy.agentes.charlar(empleado.id, contenido, token)
-      : await window.drafsoy.recepcion.enviar(contenido, token)
+      ? await window.drafsoy.agentes.charlar(empleado.id, contenido, token, adjunta)
+      : await window.drafsoy.recepcion.enviar(contenido, token, adjunta)
     if (!resultado.ok) setError(resultado.error ?? 'No pude enviar el mensaje.')
     setPensando(false)
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col">
+      {/* Imagen en grande (clic para cerrar) */}
+      {enGrande && (
+        <button type="button" onClick={() => setEnGrande(null)} className="absolute inset-0 z-20 flex cursor-zoom-out items-center justify-center bg-black/80 p-6">
+          <img src={enGrande} alt="Imagen en grande" className="max-h-full max-w-full rounded-xl object-contain" />
+        </button>
+      )}
       <div className="flex items-center gap-4 border-b-2 border-linea bg-suave py-4 pr-16 pl-6">
         <Avatar nombre={nombre} color={recepcionista?.color ?? '#ffc93c'} foto={recepcionista?.skin_avatar ?? null} tam={48} />
         <div>
@@ -85,6 +115,11 @@ export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
                     : 'rounded-bl-sm bg-suave'
               }`}
             >
+              {m.imagen && (
+                <button type="button" onClick={() => setEnGrande(m.imagen)} title="Ver en grande" className="block">
+                  <img src={m.imagen} alt="Imagen adjunta" className="mb-1.5 max-h-64 cursor-zoom-in rounded-xl border border-white/20 object-contain" />
+                </button>
+              )}
               <TextoConFormato texto={m.contenido} />
               {m.tarea_id && <span className="mt-1 block text-[11px] font-bold text-lima-osc">🪂 Tarea creada</span>}
             </div>
@@ -101,17 +136,43 @@ export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
       </div>
 
       {error && <p className="mx-6 mb-2 rounded-lg bg-rose-50 px-3 py-2 text-sm font-bold text-alerta">{error}</p>}
-      <form onSubmit={enviar} className="flex gap-2 border-t-2 border-linea bg-suave px-6 py-4">
+      <form onSubmit={enviar} className="border-t-2 border-linea bg-suave px-6 py-4">
+        {imagen && (
+          <div className="relative mb-2 inline-block">
+            <img src={imagen} alt="Imagen para enviar" className="max-h-28 rounded-xl border border-linea object-contain" />
+            <button
+              type="button"
+              onClick={() => setImagen(null)}
+              title="Quitar imagen"
+              className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-tinta text-white shadow"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => archivo.current?.click()}
+          disabled={pensando}
+          title="Adjuntar imagen (también puedes pegar una captura con Ctrl+V)"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-tinta-suave transition hover:text-tinta disabled:opacity-50"
+        >
+          <Paperclip size={18} />
+        </button>
+        <input ref={archivo} type="file" accept="image/*" className="hidden" onChange={(e) => (adjuntar(e.target.files?.[0]), (e.target.value = ''))} />
         <input
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          placeholder={empleado ? `Escríbele a ${nombre}…` : `Escribe un encargo para ${nombre}…`}
+          onPaste={alPegar}
+          placeholder={empleado ? `Escríbele a ${nombre}… (puedes pegar capturas con Ctrl+V)` : `Escribe un encargo para ${nombre}… (puedes pegar capturas con Ctrl+V)`}
           disabled={pensando}
           className={claseCampo}
         />
-        <Boton type="submit" disabled={pensando || !texto.trim()}>
+        <Boton type="submit" disabled={pensando || (!texto.trim() && !imagen)}>
           Enviar
         </Boton>
+        </div>
       </form>
     </div>
   )
@@ -133,4 +194,30 @@ function TextoConFormato({ texto }: { texto: string }) {
       })}
     </>
   )
+}
+
+// Reduce la imagen (lado máx. 1568 px, JPEG) para que pese poco y la IA la lea bien
+const LADO_MAX = 1568
+function reducirImagen(f: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(f)
+    const img = new Image()
+    img.onload = () => {
+      const escala = Math.min(1, LADO_MAX / Math.max(img.width, img.height))
+      const lienzo = document.createElement('canvas')
+      lienzo.width = Math.round(img.width * escala)
+      lienzo.height = Math.round(img.height * escala)
+      const c = lienzo.getContext('2d')!
+      c.fillStyle = '#ffffff'
+      c.fillRect(0, 0, lienzo.width, lienzo.height)
+      c.drawImage(img, 0, 0, lienzo.width, lienzo.height)
+      URL.revokeObjectURL(url)
+      resolve(lienzo.toDataURL('image/jpeg', 0.85))
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('imagen no válida'))
+    }
+    img.src = url
+  })
 }

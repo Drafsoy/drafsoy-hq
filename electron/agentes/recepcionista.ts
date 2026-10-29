@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { CONFIG } from '../config'
 import { costeUsd, gastoDelMes, registrarGasto } from './gastos'
-import { DATOS_ACCIONES, problemaEnDetalle } from './comun'
+import { DATOS_ACCIONES, REGLA_IMAGENES, historialConImagenes, problemaEnDetalle } from './comun'
 import { revisarPropuestas } from './supervisor'
 
 // La recepcionista: recibe encargos en lenguaje natural, los convierte en tareas
@@ -160,7 +160,7 @@ function horaLocal(texto: string): Date | null {
 }
 const horaParaRafa = (d: Date) => d.toLocaleString('es', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false })
 
-export async function atenderMensaje(texto: string, token: string): Promise<void> {
+export async function atenderMensaje(texto: string, token: string, imagen: string | null = null): Promise<void> {
   if (!CONFIG.anthropicApiKey) throw new Error('Falta ANTHROPIC_API_KEY en el archivo .env')
   // Cliente de Supabase con la sesión de Rafa: las reglas de seguridad se aplican igual que en la pantalla
   const db = createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey, {
@@ -169,7 +169,7 @@ export async function atenderMensaje(texto: string, token: string): Promise<void
   })
 
   // 1) Guardar el mensaje de Rafa
-  await db.from('mensajes').insert({ canal: 'recepcion', rol: 'usuario', contenido: texto })
+  await db.from('mensajes').insert({ canal: 'recepcion', rol: 'usuario', contenido: texto, imagen })
 
   const [{ data: agentes }, { data: clientes }, { data: asignaciones }, { data: ajustes }] = await Promise.all([
     db.from('agentes').select('id, nombre, rol, modelo, instrucciones, tope_gasto_usd, es_recepcionista, es_supervisor, estado'),
@@ -259,6 +259,7 @@ async function conversar(
           'Si ese trabajo aún no existe, crea la tarea normal y añade en la descripción: "Al terminar, proponer subir_archivo para dejarlo en el Drive del cliente".',
         '- Si Rafa pide agendar una reunión, usa proponer_accion agendar_reunion. Pregunta solo si falta la fecha, la hora o el correo de algún invitado; nunca inventes correos.',
         '- Tras proponer, dile a Rafa que el supervisor lo revisa y luego le llega a su bandeja para aprobar. Nada se sube ni se agenda sin su aprobación.',
+        REGLA_IMAGENES,
         '- Si Rafa pide que le recuerdes o avises de algo a una hora ("recuérdame en 2 minutos…", "avísame mañana a las 9…"), usa crear_recordatorio (no crees una tarea): le llega por Telegram. Confirma la hora en una línea. Si no da hora ni plazo, pregúntala.'
       ].join('\n')
     },
@@ -266,11 +267,8 @@ async function conversar(
   ]
 
   // Historial reciente del chat (el último mensaje es el de Rafa recién guardado)
-  const { data: historial } = await db.from('mensajes').select('rol, contenido').eq('canal', 'recepcion').in('rol', ['usuario', 'asistente']).order('creado_en', { ascending: false }).limit(20)
-  const messages: Anthropic.MessageParam[] = ((historial ?? []) as { rol: string; contenido: string }[])
-    .reverse()
-    .map((m) => ({ role: m.rol === 'usuario' ? 'user' : 'assistant', content: m.contenido }) as Anthropic.MessageParam)
-  while (messages.length && messages[0].role !== 'user') messages.shift()
+  const { data: historial } = await db.from('mensajes').select('rol, contenido, imagen').eq('canal', 'recepcion').in('rol', ['usuario', 'asistente']).order('creado_en', { ascending: false }).limit(20)
+  const messages = historialConImagenes(historial ?? [])
 
   let ultimaTarea: string | null = null
   let entrada = 0

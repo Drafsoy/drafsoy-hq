@@ -7,7 +7,7 @@ import { charlarConEmpleado } from './agentes/charla'
 import { trabajarTarea } from './agentes/empleado'
 import { decidirAprobacion } from './agentes/ejecutor'
 import { rescatarHuerfanas } from './agentes/supervisor'
-import { crearDb } from './agentes/comun'
+import { crearDb, imagenValida } from './agentes/comun'
 import { conectarGoogle, desconectarGoogle, estadoGoogle } from './google'
 
 // Cada empleado trabaja una tarea a la vez (las demás esperan en su cola)
@@ -78,11 +78,11 @@ ipcMain.handle('sistema:info', () => ({
 }))
 
 // La pantalla le pasa a la recepcionista el mensaje de Rafa y su sesión (para respetar la seguridad de la base de datos)
-ipcMain.handle('recepcion:enviar', async (_evento, texto: unknown, token: unknown) => {
+ipcMain.handle('recepcion:enviar', async (_evento, texto: unknown, token: unknown, imagen: unknown) => {
   if (typeof texto !== 'string' || !texto.trim() || texto.length > 8000) return { ok: false, error: 'Mensaje vacío o demasiado largo.' }
   if (typeof token !== 'string' || !token) return { ok: false, error: 'Sesión no válida.' }
   try {
-    await atenderMensaje(texto.trim(), token)
+    await atenderMensaje(texto.trim(), token, imagenValida(imagen))
     return { ok: true }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }
@@ -90,11 +90,11 @@ ipcMain.handle('recepcion:enviar', async (_evento, texto: unknown, token: unknow
 })
 
 // Rafa habla directamente con un empleado en su chat
-ipcMain.handle('agentes:charlar', async (_evento, agenteId: unknown, texto: unknown, token: unknown) => {
+ipcMain.handle('agentes:charlar', async (_evento, agenteId: unknown, texto: unknown, token: unknown, imagen: unknown) => {
   if (typeof agenteId !== 'string' || typeof texto !== 'string' || !texto.trim() || texto.length > 8000) return { ok: false, error: 'Mensaje vacío o demasiado largo.' }
   if (typeof token !== 'string' || !token) return { ok: false, error: 'Sesión no válida.' }
   try {
-    await charlarConEmpleado(agenteId, texto.trim(), token)
+    await charlarConEmpleado(agenteId, texto.trim(), token, imagenValida(imagen))
     return { ok: true }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }

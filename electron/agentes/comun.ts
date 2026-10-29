@@ -65,6 +65,9 @@ export function problemaEnDetalle(tipo: string, detalle: Record<string, unknown>
 
 // Supabase con la sesión de Rafa: las reglas de seguridad se aplican igual que en la pantalla
 export function crearDb(token: string): SupabaseClient {
+  if (!CONFIG.supabaseUrl || !CONFIG.supabaseAnonKey) {
+    throw new Error('Falta el archivo de llaves (.env) de la app o está incompleto. Debe estar en la carpeta %APPDATA%\\Drafsoy HQ. Después, cierra y vuelve a abrir la app.')
+  }
   return createClient(CONFIG.supabaseUrl, CONFIG.supabaseAnonKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false, autoRefreshToken: false }
@@ -143,3 +146,40 @@ export const mensajeError = (e: unknown) =>
         : e instanceof Error
           ? e.message
           : String(e)
+
+// ---------- Chats con imágenes ----------
+// Las imágenes llegan como data URL (jpeg ya reducido en la pantalla). Solo las últimas se pasan a la IA.
+const MAX_IMAGENES_HISTORIAL = 3
+export const MAX_IMAGEN_CARACTERES = 3_000_000
+
+export function imagenValida(imagen: unknown): string | null {
+  return typeof imagen === 'string' && /^data:image\/(jpeg|png|webp|gif);base64,/.test(imagen) && imagen.length <= MAX_IMAGEN_CARACTERES ? imagen : null
+}
+
+function bloqueImagen(dataUrl: string): Anthropic.ImageBlockParam | null {
+  const m = /^data:(image\/(?:jpeg|png|webp|gif));base64,(.+)$/.exec(dataUrl)
+  if (!m) return null
+  return { type: 'image', source: { type: 'base64', media_type: m[1] as 'image/jpeg', data: m[2] } }
+}
+
+// Convierte las filas del chat (de la más nueva a la más vieja) en mensajes para la IA, en orden y con sus imágenes
+export function historialConImagenes(filas: { rol: string; contenido: string; imagen?: string | null }[]): Anthropic.MessageParam[] {
+  const conImagen = new Set(filas.filter((m) => m.rol === 'usuario' && m.imagen).slice(0, MAX_IMAGENES_HISTORIAL))
+  const mensajes: Anthropic.MessageParam[] = []
+  for (const m of [...filas].reverse()) {
+    if (m.rol === 'sistema') continue
+    const role = m.rol === 'usuario' ? 'user' : 'assistant'
+    const bloques: Anthropic.ContentBlockParam[] = []
+    const imagen = conImagen.has(m) && m.imagen ? bloqueImagen(m.imagen) : null
+    if (imagen) bloques.push(imagen)
+    bloques.push({ type: 'text', text: String(m.contenido || '(imagen adjunta)') })
+    const ultimo = mensajes[mensajes.length - 1]
+    if (ultimo?.role === role) (ultimo.content as Anthropic.ContentBlockParam[]).push(...bloques)
+    else mensajes.push({ role, content: bloques })
+  }
+  while (mensajes.length && mensajes[0].role !== 'user') mensajes.shift()
+  return mensajes
+}
+
+export const REGLA_IMAGENES =
+  '- Si Rafa adjunta una imagen (por ejemplo una captura de un reporte de HubSpot o de Ads Manager), léela con atención. Si es para una tarea o un trabajo, copia en la descripción o el encargo los datos EXACTOS que ves en ella (cifras, fechas, filtros), porque quien haga el trabajo no verá la imagen.'

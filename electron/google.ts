@@ -245,6 +245,32 @@ export async function crearEvento(e: { titulo: string; descripcion: string; fech
   return { id: evento.id as string, enlace: evento.htmlLink as string, meet: (evento.hangoutLink as string | undefined) ?? null }
 }
 
+// Lee los eventos del calendario entre dos días (incluidos), en la hora de esta PC. Solo lectura.
+export async function listarEventos(desde: string, hasta: string) {
+  const inicio = new Date(`${desde}T00:00:00`)
+  const fin = new Date(`${hasta}T23:59:59`)
+  if (Number.isNaN(inicio.getTime()) || Number.isNaN(fin.getTime())) throw new Error('Fechas no válidas (usa AAAA-MM-DD).')
+  const params = new URLSearchParams({
+    timeMin: inicio.toISOString(),
+    timeMax: fin.toISOString(),
+    singleEvents: 'true',
+    orderBy: 'startTime',
+    maxResults: '30'
+  })
+  const datos = await llamarGoogle(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`)
+  const hora = (v?: { dateTime?: string; date?: string }) =>
+    v?.dateTime ? new Date(v.dateTime).toLocaleString('es', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : v?.date ? `${v.date} (todo el día)` : ''
+  return ((datos.items ?? []) as Record<string, any>[]).map((e) => ({
+    titulo: e.summary ?? '(sin título)',
+    empieza: hora(e.start),
+    termina: hora(e.end),
+    meet: e.hangoutLink ?? e.conferenceData?.entryPoints?.find((p: { entryPointType?: string }) => p.entryPointType === 'video')?.uri ?? null,
+    enlace: e.htmlLink ?? null,
+    lugar: e.location ?? null,
+    invitados: Array.isArray(e.attendees) ? e.attendees.map((a: { email?: string }) => a.email).filter(Boolean).slice(0, 10) : []
+  }))
+}
+
 // ---------- Gmail ----------
 
 // Asunto con acentos y emojis: se codifica para que llegue bien a cualquier programa de correo

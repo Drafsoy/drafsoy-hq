@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { consultarConector } from './conectores'
+import { googleConectado, listarEventos } from '../google'
 import { COLUMNAS_AGENTE, Contador, REGLA_IMAGENES, crearAnthropic, crearDb, historialConImagenes, llamarModelo, mensajeError, superaTope, textoDe, type AgenteDb } from './comun'
 
 // Chat directo de Rafa con un empleado. El empleado conoce sus cuentas, la memoria de cada cliente
@@ -141,6 +142,13 @@ async function conversar(db: SupabaseClient, yo: AgenteDb, canal: string, contad
       input_schema: { type: 'object', properties: { consulta: { type: 'string' } }, required: ['consulta'] }
     })
   }
+  if (puede('consultar_agenda')) {
+    herramientas.push({
+      name: 'ver_calendario',
+      description: 'Lee los eventos REALES del Google Calendar de Rafa entre dos fechas (reuniones, horas, enlaces de Meet, invitados). Solo lectura: no crea ni cambia nada. Úsala cuando Rafa pregunte por sus reuniones, su día o el enlace de una reunión.',
+      input_schema: { type: 'object', properties: { desde: { type: 'string', description: 'AAAA-MM-DD' }, hasta: { type: 'string', description: 'AAAA-MM-DD' } }, required: ['desde', 'hasta'] }
+    })
+  }
   if (puede('memoria_cliente') && misClientes.length) {
     herramientas.push({
       name: 'guardar_memoria',
@@ -214,6 +222,10 @@ async function conversar(db: SupabaseClient, yo: AgenteDb, canal: string, contad
             await db.from('agentes').update({ estado: 'disponible' }).eq('id', yo.id)
           }
           contenido = 'Tarea retomada con las indicaciones de Rafa.'
+        } else if (uso.name === 'ver_calendario') {
+          if (!googleConectado()) throw new Error('Google no está conectado: Rafa debe conectarlo en Ajustes.')
+          const eventos = await listarEventos(String(datos.desde), String(datos.hasta ?? datos.desde))
+          contenido = eventos.length ? JSON.stringify(eventos) : 'No hay eventos en esas fechas.'
         } else if (uso.name === 'consultar_meta_ads' || uso.name === 'consultar_hubspot') {
           contenido = await consultarConector(uso.name === 'consultar_meta_ads' ? 'meta' : 'hubspot', String(datos.consulta ?? ''))
         } else if (uso.name === 'guardar_memoria') {

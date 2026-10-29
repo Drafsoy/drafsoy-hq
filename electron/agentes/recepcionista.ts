@@ -4,6 +4,7 @@ import { CONFIG } from '../config'
 import { costeUsd, gastoDelMes, registrarGasto } from './gastos'
 import { DATOS_ACCIONES, REGLA_IMAGENES, historialConImagenes, problemaEnDetalle } from './comun'
 import { revisarPropuestas } from './supervisor'
+import { googleConectado, listarEventos } from '../google'
 
 // La recepcionista: recibe encargos en lenguaje natural, los convierte en tareas
 // y se los asigna al empleado que lleva esa cuenta. Corre en "el cerebro" (proceso principal),
@@ -72,6 +73,18 @@ const HERRAMIENTAS: Anthropic.Tool[] = [
         hasta: { type: 'string', description: 'Fecha AAAA-MM-DD: solo tareas que vencen hasta ese día (incluye las sin fecha si se pide todo)' },
         cliente_id: { type: 'string', description: 'Filtrar por cliente' }
       }
+    }
+  },
+  {
+    name: 'ver_calendario',
+    description: 'Lee los eventos REALES del Google Calendar de Rafa entre dos fechas (reuniones, horas, enlaces de Meet, invitados). Solo lectura: no crea ni cambia nada. Úsala cuando Rafa pregunte por sus reuniones, su día o el enlace de una reunión.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        desde: { type: 'string', description: 'Primer día, AAAA-MM-DD' },
+        hasta: { type: 'string', description: 'Último día, AAAA-MM-DD (si es solo un día, igual que desde)' }
+      },
+      required: ['desde', 'hasta']
     }
   },
   {
@@ -254,6 +267,7 @@ async function conversar(
         '- Si Rafa nombra a un empleado, asígnasela a él aunque no lleve esa cuenta.',
         '- Tras crear tareas, confirma en 1-3 líneas: qué creaste, para quién y cuándo vence.',
         '- Para "la agenda", "qué hay hoy" o similares, usa consultar_agenda y resume por prioridad.',
+        '- Para sus reuniones y eventos del calendario ("¿qué reuniones tengo?", "pásame el link de la reunión de las 4"), usa ver_calendario y dale la hora, el título y el enlace de Meet.',
         '- Tú no envías, publicas ni tocas campañas: eso lo hacen los empleados y siempre pasa por la bandeja de aprobaciones de Rafa.',
         '- Google Drive y Calendar: si Rafa pide dejar un trabajo YA HECHO en el Drive ("deja los copies en el Drive de X"), usa buscar_entregables y luego proponer_accion subir_archivo con esa tarea. ' +
           'Si ese trabajo aún no existe, crea la tarea normal y añade en la descripción: "Al terminar, proponer subir_archivo para dejarlo en el Drive del cliente".',
@@ -379,6 +393,11 @@ async function ejecutar(
           vence: t.fecha_limite
         }))
       return { texto: lista.length ? JSON.stringify(lista) : 'No hay tareas abiertas con ese filtro.' }
+    }
+    case 'ver_calendario': {
+      if (!googleConectado()) return { texto: 'Google no está conectado: Rafa debe conectarlo en Ajustes.' }
+      const eventos = await listarEventos(String(datos.desde), String(datos.hasta ?? datos.desde))
+      return { texto: eventos.length ? JSON.stringify(eventos) : 'No hay eventos en esas fechas.' }
     }
     case 'cambiar_tarea': {
       const cambios: Record<string, unknown> = {}

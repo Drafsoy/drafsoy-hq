@@ -26,16 +26,17 @@ export default function Orquestador() {
   useEffect(() => {
     if (!ajustes?.trabajo_automatico) return
     const listas = tareas.filter((t) => {
+      // La clave lleva la última modificación: si Rafa la retoma desde el chat (intentos vuelve a 0), se vuelve a pedir
       if (t.estado !== 'pendiente' || !t.agente_id) return false
       const agente = agentes.find((a) => a.id === t.agente_id)
-      return agente && !agente.es_recepcionista && !agente.es_supervisor && !pedidas.current.has(`${t.id}:${t.intentos}`)
+      return agente && !agente.es_recepcionista && !agente.es_supervisor && !pedidas.current.has(`${t.id}:${t.intentos}:${t.actualizado_en}`)
     })
     if (!listas.length) return
     supabase.auth.getSession().then(({ data }) => {
       const token = data.session?.access_token
       if (!token) return
       for (const t of listas) {
-        pedidas.current.add(`${t.id}:${t.intentos}`)
+        pedidas.current.add(`${t.id}:${t.intentos}:${t.actualizado_en}`)
         window.drafsoy.agentes.trabajar(t.id, t.agente_id!, token)
       }
     })

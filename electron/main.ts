@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { writeFileSync } from 'node:fs'
 import './config'
 import { atenderMensaje } from './agentes/recepcionista'
+import { charlarConEmpleado } from './agentes/charla'
 import { trabajarTarea } from './agentes/empleado'
 import { decidirAprobacion } from './agentes/ejecutor'
 import { rescatarHuerfanas } from './agentes/supervisor'
@@ -77,6 +78,18 @@ ipcMain.handle('recepcion:enviar', async (_evento, texto: unknown, token: unknow
   if (typeof token !== 'string' || !token) return { ok: false, error: 'Sesión no válida.' }
   try {
     await atenderMensaje(texto.trim(), token)
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  }
+})
+
+// Rafa habla directamente con un empleado en su chat
+ipcMain.handle('agentes:charlar', async (_evento, agenteId: unknown, texto: unknown, token: unknown) => {
+  if (typeof agenteId !== 'string' || typeof texto !== 'string' || !texto.trim() || texto.length > 8000) return { ok: false, error: 'Mensaje vacío o demasiado largo.' }
+  if (typeof token !== 'string' || !token) return { ok: false, error: 'Sesión no válida.' }
+  try {
+    await charlarConEmpleado(agenteId, texto.trim(), token)
     return { ok: true }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) }

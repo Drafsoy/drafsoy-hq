@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { supabase } from '@/datos/supabase'
 import { usarDatos } from '@/datos/DatosProvider'
+import { usarRuta } from '@/navegacion'
 import { Boton, Titulo, claseCampo } from '@/componentes/ui'
 
-export default function ChatRecepcion() {
+// Chat con la recepcionista o, si llega agenteId, chat directo con ese empleado
+export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
   const { mensajes, agentes } = usarDatos()
-  const recepcionista = agentes.find((a) => a.es_recepcionista)
+  const { ir } = usarRuta()
+  const empleado = agenteId ? agentes.find((a) => a.id === agenteId) : undefined
+  const recepcionista = empleado ?? agentes.find((a) => a.es_recepcionista)
   const nombre = recepcionista?.nombre ?? 'Recepción'
-  const delCanal = mensajes.filter((m) => m.canal === 'recepcion').sort((a, b) => a.creado_en.localeCompare(b.creado_en))
+  const canal = empleado ? empleado.id : 'recepcion'
+  const delCanal = mensajes.filter((m) => m.canal === canal).sort((a, b) => a.creado_en.localeCompare(b.creado_en))
   const [texto, setTexto] = useState('')
   const [pensando, setPensando] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -26,7 +31,10 @@ export default function ChatRecepcion() {
     setPensando(true)
     // El cerebro guarda tu mensaje, piensa la respuesta con la IA y crea las tareas
     const { data } = await supabase.auth.getSession()
-    const resultado = await window.drafsoy.recepcion.enviar(contenido, data.session?.access_token ?? '')
+    const token = data.session?.access_token ?? ''
+    const resultado = empleado
+      ? await window.drafsoy.agentes.charlar(empleado.id, contenido, token)
+      : await window.drafsoy.recepcion.enviar(contenido, token)
     if (!resultado.ok) setError(resultado.error ?? 'No pude enviar el mensaje.')
     setPensando(false)
   }
@@ -37,16 +45,33 @@ export default function ChatRecepcion() {
         <span className="h-12 w-10 rounded-md border-4 border-black/40" style={{ background: recepcionista?.color ?? '#ffc93c' }} />
         <div>
           <Titulo color="#ffc93c">{nombre}</Titulo>
-          <p className="text-sm text-white/60">Dime qué necesitas y se lo paso a quien lleva esa cuenta.</p>
+          <p className="text-sm text-white/60">
+            {empleado ? `Habla con ${nombre} sobre sus cuentas y sus tareas.` : 'Dime qué necesitas y se lo paso a quien lleva esa cuenta.'}
+          </p>
         </div>
+        {empleado && (
+          <button onClick={() => ir({ pantalla: 'agente', id: empleado.id })} className="ml-auto text-sm font-bold text-sky-300 hover:underline">
+            Ver ficha
+          </button>
+        )}
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto px-6 py-5">
         {delCanal.length === 0 && (
           <div className="space-y-2 text-center text-white/50">
-            <p>Escribe tu primer encargo, por ejemplo:</p>
-            <p className="italic">“Para WSE necesito 3 copies para el viernes, urgente”</p>
-            <p className="italic">“¿Qué tenemos para hoy?”</p>
+            {empleado ? (
+              <>
+                <p>Pregúntale lo que quieras, por ejemplo:</p>
+                <p className="italic">“¿En qué estás trabajando?”</p>
+                <p className="italic">“¿Por qué me necesitas?”</p>
+              </>
+            ) : (
+              <>
+                <p>Escribe tu primer encargo, por ejemplo:</p>
+                <p className="italic">“Para WSE necesito 3 copies para el viernes, urgente”</p>
+                <p className="italic">“¿Qué tenemos para hoy?”</p>
+              </>
+            )}
           </div>
         )}
         {delCanal.map((m) => (
@@ -80,7 +105,7 @@ export default function ChatRecepcion() {
         <input
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          placeholder={`Escribe un encargo para ${nombre}…`}
+          placeholder={empleado ? `Escríbele a ${nombre}…` : `Escribe un encargo para ${nombre}…`}
           disabled={pensando}
           className={claseCampo}
         />

@@ -97,8 +97,8 @@ function OficinaLista() {
           </PanelLateral>
         )}
         {ruta.pantalla === 'chat' && (
-          <PanelLateral ancho={540}>
-            <ChatRecepcion />
+          <PanelLateral key={ruta.agenteId ?? 'recepcion'} ancho={540}>
+            <ChatRecepcion agenteId={ruta.agenteId} />
           </PanelLateral>
         )}
         {ruta.pantalla === 'nuevoAgente' && (

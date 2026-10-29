@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { supabase } from '@/datos/supabase'
 import { clientesDeAgente, usarDatos } from '@/datos/DatosProvider'
+import { usarRuta } from '@/navegacion'
 import { ESTADOS_AGENTE, TAREA_ABIERTA, type Agente, type Tarea } from '@/datos/tipos'
 import FormularioAgente from '@/componentes/FormularioAgente'
 import { Boton, Etiqueta, Pantalla, Subtitulo, Tarjeta, Titulo, Vacio, claseCampo } from '@/componentes/ui'
 
 export default function FichaAgente({ id }: { id: string }) {
   const datos = usarDatos()
+  const { ir } = usarRuta()
   const { agentes, tareas, gastos, asignaciones } = datos
   const agente = agentes.find((a) => a.id === id)
   if (!agente) return <Pantalla><Vacio texto="Este agente no existe." /></Pantalla>
@@ -37,7 +39,12 @@ export default function FichaAgente({ id }: { id: string }) {
             ))}
           </div>
         </div>
-        <Etiqueta {...ESTADOS_AGENTE[agente.estado]} />
+        <div className="flex flex-col items-end gap-2">
+          <Etiqueta {...ESTADOS_AGENTE[agente.estado]} />
+          <Boton variante="azul" onClick={() => ir(agente.es_recepcionista ? { pantalla: 'chat' } : { pantalla: 'chat', agenteId: agente.id })}>
+            💬 Hablar con {agente.nombre}
+          </Boton>
+        </div>
       </div>
 
       <div className="mb-8 grid grid-cols-3 gap-3">

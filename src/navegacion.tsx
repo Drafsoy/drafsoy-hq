@@ -5,7 +5,7 @@ export type Ruta =
   | { pantalla: 'cliente'; id: string }
   | { pantalla: 'agente'; id: string }
   | { pantalla: 'bandeja' }
-  | { pantalla: 'chat' }
+  | { pantalla: 'chat'; agenteId?: string } // sin agenteId: recepción; con agenteId: chat con ese empleado
   | { pantalla: 'ajustes' }
   | { pantalla: 'nuevoAgente' }
   | { pantalla: 'nuevoCliente' }

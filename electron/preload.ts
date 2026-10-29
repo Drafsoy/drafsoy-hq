@@ -13,7 +13,10 @@ const api = {
     trabajar: (tareaId: string, agenteId: string, token: string): Promise<{ ok: boolean }> =>
       ipcRenderer.invoke('agentes:trabajar', tareaId, agenteId, token),
     // Retoma revisiones y tareas que se quedaron a medias porque la app se cerró
-    rescatar: (token: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('agentes:rescatar', token)
+    rescatar: (token: string): Promise<{ ok: boolean }> => ipcRenderer.invoke('agentes:rescatar', token),
+    // Le escribes a un empleado en su chat; su respuesta llega como mensaje nuevo
+    charlar: (agenteId: string, texto: string, token: string): Promise<{ ok: boolean; error?: string }> =>
+      ipcRenderer.invoke('agentes:charlar', agenteId, texto, token)
   },
   aprobaciones: {
     // Tu decisión en la bandeja; si apruebas, el ejecutor la lleva a cabo

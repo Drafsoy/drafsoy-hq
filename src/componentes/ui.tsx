@@ -75,3 +75,14 @@ export function Avatar({ nombre, color, foto, tam = 40 }: { nombre: string; colo
     </span>
   )
 }
+
+// Logo del cliente; si aún no tiene, su inicial sobre su color
+export function LogoCliente({ nombre, color, logo, tam = 40 }: { nombre: string; color: string; logo: string | null; tam?: number }) {
+  return logo ? (
+    <img src={logo} alt={nombre} className="shrink-0 rounded-xl border border-linea bg-white object-contain" style={{ width: tam, height: tam }} />
+  ) : (
+    <span className="flex shrink-0 items-center justify-center rounded-xl font-bold text-white" style={{ width: tam, height: tam, background: color, fontSize: tam * 0.38 }}>
+      {nombre.charAt(0)}
+    </span>
+  )
+}

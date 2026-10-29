@@ -3,6 +3,7 @@ import { supabase } from '@/datos/supabase'
 import { usarDatos } from '@/datos/DatosProvider'
 import { usarRuta } from '@/navegacion'
 import { Boton, Pantalla, Subtitulo, Titulo, claseCampo } from '@/componentes/ui'
+import SelectorFoto from '@/componentes/SelectorFoto'
 
 const COLORES = ['#ff5a6e', '#ff9f40', '#ffc93c', '#5ad15a', '#3fb6ff', '#a15cff', '#e64980', '#20c997']
 
@@ -13,6 +14,7 @@ export default function NuevoCliente() {
   const [nombre, setNombre] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [color, setColor] = useState(COLORES[4])
+  const [logo, setLogo] = useState<string | null>(null)
   const [equipo, setEquipo] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
   const empleados = agentes.filter((a) => !a.es_recepcionista && !a.es_supervisor)
@@ -22,7 +24,7 @@ export default function NuevoCliente() {
     setError(null)
     const { data, error } = await supabase
       .from('clientes')
-      .insert({ nombre: nombre.trim(), descripcion: descripcion.trim() || null, color })
+      .insert({ nombre: nombre.trim(), descripcion: descripcion.trim() || null, color, logo })
       .select('id')
       .single()
     if (error) return setError(error.message)
@@ -37,6 +39,10 @@ export default function NuevoCliente() {
         <p className="text-tinta/80">Una cuenta nueva para la agencia. Luego podrás guardar su memoria (tono, público, ofertas…).</p>
       </div>
       <form onSubmit={crear} className="space-y-4">
+        <div className="max-w-md">
+          <Subtitulo>Logo de la empresa (opcional)</Subtitulo>
+          <SelectorFoto encajar valor={logo} alCambiar={setLogo} />
+        </div>
         <label className="block">
           <Subtitulo>Nombre</Subtitulo>
           <input required value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre de la marca" className={claseCampo} />

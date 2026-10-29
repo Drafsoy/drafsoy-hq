@@ -11,6 +11,7 @@ export interface Cliente {
   nombre: string
   color: string
   descripcion: string | null
+  logo: string | null
   activo: boolean
   creado_en: string
 }

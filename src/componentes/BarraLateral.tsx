@@ -4,7 +4,7 @@ import { clientesDeAgente, usarDatos } from '@/datos/DatosProvider'
 import { ESTADOS_AGENTE, TAREA_ABIERTA } from '@/datos/tipos'
 import { usarRuta } from '@/navegacion'
 import BarraEscudo from './BarraEscudo'
-import { Avatar } from './ui'
+import { Avatar, LogoCliente } from './ui'
 
 // Columna derecha del dashboard: lo que te necesita, el equipo, los clientes y el presupuesto de IA.
 export default function BarraLateral() {
@@ -82,9 +82,7 @@ export default function BarraLateral() {
                 key={cliente.id}
                 alPulsar={() => ir({ pantalla: 'cliente', id: cliente.id })}
                 icono={
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white" style={{ background: cliente.color }}>
-                    {cliente.nombre.charAt(0)}
-                  </span>
+                  <LogoCliente nombre={cliente.nombre} color={cliente.color} logo={cliente.logo} />
                 }
                 titulo={cliente.nombre}
                 detalle={abiertas === 0 ? 'Sin tareas abiertas' : `${abiertas} ${abiertas === 1 ? 'tarea abierta' : 'tareas abiertas'}`}

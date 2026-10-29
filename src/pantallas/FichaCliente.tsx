@@ -3,7 +3,9 @@ import { supabase } from '@/datos/supabase'
 import { agentesDeCliente, usarDatos } from '@/datos/DatosProvider'
 import { ESTADOS_AGENTE, ESTADOS_TAREA, PRIORIDADES, type EstadoTarea, type Tarea } from '@/datos/tipos'
 import { usarRuta } from '@/navegacion'
-import { Boton, Etiqueta, Pantalla, Subtitulo, Tarjeta, Titulo, Vacio, claseCampo } from '@/componentes/ui'
+import { ChevronDown } from 'lucide-react'
+import { Boton, Etiqueta, LogoCliente, Pantalla, Subtitulo, Tarjeta, Titulo, Vacio, claseCampo } from '@/componentes/ui'
+import SelectorFoto from '@/componentes/SelectorFoto'
 
 // Supabase solo envía el cambio cuando se espera su respuesta (.then); si falla, se avisa
 const avisarError = ({ error }: { error: { message: string } | null }) => {
@@ -39,12 +41,14 @@ export default function FichaCliente({ id }: { id: string }) {
   return (
     <Pantalla>
       <div className="mb-6 flex items-center gap-4 pr-12">
-        <span className="h-12 w-12 rounded-xl border-4 border-linea" style={{ background: cliente.color }} />
+        <LogoCliente nombre={cliente.nombre} color={cliente.color} logo={cliente.logo} tam={64} />
         <div>
-          <Titulo color={cliente.color}>{cliente.nombre}</Titulo>
+          <Titulo>{cliente.nombre}</Titulo>
           <p className="text-tinta-suave">{cliente.descripcion ?? 'Cuenta de la agencia'}</p>
         </div>
       </div>
+
+      <EditarLogo key={cliente.id} clienteId={cliente.id} logo={cliente.logo} />
 
       <Subtitulo>Equipo que lleva la cuenta</Subtitulo>
       <div className="mb-3 flex flex-wrap gap-3">
@@ -130,41 +134,76 @@ export default function FichaCliente({ id }: { id: string }) {
   )
 }
 
+// Tarea plegada: solo el título, la prioridad y quién la lleva. La flecha despliega el resto.
 function TarjetaTarea({ tarea }: { tarea: Tarea }) {
   const { agentes } = usarDatos()
+  const [abierta, setAbierta] = useState(false)
   const agente = agentes.find((a) => a.id === tarea.agente_id)
   return (
-    <div className="rounded-xl border-2 border-linea bg-suave p-3 text-sm">
-      <div className="mb-1 flex items-start justify-between gap-2">
-        <p className="font-bold">{tarea.titulo}</p>
+    <div className="rounded-xl border border-linea bg-tarjeta text-sm">
+      <button type="button" onClick={() => setAbierta((v) => !v)} className="flex w-full items-start gap-2 p-3 text-left">
+        <ChevronDown size={16} className={`mt-0.5 shrink-0 text-tinta-suave transition ${abierta ? 'rotate-180' : ''}`} />
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold text-tinta">{tarea.titulo}</span>
+          <span className="block text-xs text-tinta-suave">
+            {agente ? agente.nombre : 'Sin asignar'}
+            {tarea.fecha_limite ? ` · vence ${new Date(tarea.fecha_limite + 'T00:00').toLocaleDateString('es')}` : ''}
+          </span>
+        </span>
         <Etiqueta {...PRIORIDADES[tarea.prioridad]} />
-      </div>
-      <p className="text-xs text-tinta-suave">
-        {agente ? agente.nombre : 'Sin asignar'}
-        {tarea.fecha_limite ? ` · vence ${new Date(tarea.fecha_limite + 'T00:00').toLocaleDateString('es')}` : ''}
-      </p>
-      {tarea.revision && (
-        <p className={`mt-2 rounded-lg px-2 py-1 text-xs whitespace-pre-wrap ${tarea.revision.startsWith('✅') ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-800'}`}>
-          {tarea.revision}
-        </p>
+      </button>
+      {abierta && (
+        <div className="border-t border-linea px-3 pb-3">
+          {tarea.revision && (
+            <p className={`mt-2 rounded-lg px-2 py-1 text-xs whitespace-pre-wrap ${tarea.revision.startsWith('✅') ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-800'}`}>
+              {tarea.revision}
+            </p>
+          )}
+          {tarea.resultado && (
+            <details className="mt-2 rounded-lg bg-suave px-2 py-1">
+              <summary className="cursor-pointer text-xs font-bold text-violeta">📄 Ver entregable</summary>
+              <p className="mt-1 max-h-64 overflow-y-auto text-xs whitespace-pre-wrap text-tinta/80 select-text">{tarea.resultado}</p>
+            </details>
+          )}
+          <select
+            value={tarea.estado}
+            onChange={(e) => supabase.from('tareas').update({ estado: e.target.value }).eq('id', tarea.id).then(avisarError)}
+            className="mt-2 w-full rounded-lg bg-suave px-2 py-1 text-xs font-bold"
+          >
+            {Object.entries(ESTADOS_TAREA).map(([valor, { texto }]) => (
+              <option key={valor} value={valor}>
+                {texto}
+              </option>
+            ))}
+          </select>
+        </div>
       )}
-      {tarea.resultado && (
-        <details className="mt-2 rounded-lg bg-suave px-2 py-1">
-          <summary className="cursor-pointer text-xs font-bold text-violeta">📄 Ver entregable</summary>
-          <p className="mt-1 max-h-64 overflow-y-auto text-xs whitespace-pre-wrap text-tinta/80 select-text">{tarea.resultado}</p>
-        </details>
+    </div>
+  )
+}
+
+// Subir o cambiar el logo del cliente (se guarda al pulsar el botón)
+function EditarLogo({ clienteId, logo }: { clienteId: string; logo: string | null }) {
+  const [nuevo, setNuevo] = useState<string | null>(logo)
+  const [guardando, setGuardando] = useState(false)
+  const cambiado = nuevo !== logo
+  return (
+    <div className="mb-6 max-w-md">
+      <Subtitulo>Logo de la empresa</Subtitulo>
+      <SelectorFoto encajar valor={nuevo} alCambiar={setNuevo} />
+      {cambiado && (
+        <Boton
+          className="mt-2"
+          disabled={guardando}
+          onClick={async () => {
+            setGuardando(true)
+            avisarError(await supabase.from('clientes').update({ logo: nuevo }).eq('id', clienteId))
+            setGuardando(false)
+          }}
+        >
+          {guardando ? 'Guardando…' : 'Guardar logo'}
+        </Boton>
       )}
-      <select
-        value={tarea.estado}
-        onChange={(e) => supabase.from('tareas').update({ estado: e.target.value }).eq('id', tarea.id).then(avisarError)}
-        className="mt-2 w-full rounded-lg bg-suave px-2 py-1 text-xs font-bold"
-      >
-        {Object.entries(ESTADOS_TAREA).map(([valor, { texto }]) => (
-          <option key={valor} value={valor}>
-            {texto}
-          </option>
-        ))}
-      </select>
     </div>
   )
 }

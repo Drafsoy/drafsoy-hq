@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -159,24 +159,42 @@ export function carpetaTrabajos(): string {
 
 export function listarTrabajos(): string[] {
   try {
+    // También vale un acceso directo (enlace de carpeta) a un proyecto que vive en otro disco, como D:\Draf-ads
+    const esCarpeta = (nombre: string) => {
+      try {
+        return statSync(join(carpetaTrabajos(), nombre)).isDirectory()
+      } catch {
+        return false
+      }
+    }
     return readdirSync(carpetaTrabajos(), { withFileTypes: true })
-      .filter((d) => d.isDirectory())
+      .filter((d) => d.isDirectory() || (d.isSymbolicLink() && esCarpeta(d.name)))
       .map((d) => d.name)
   } catch {
     return []
   }
 }
 
-function comandosPermitidos(carpeta: string): string[] {
+function leerConfig(carpeta: string): { comandos?: unknown; limite_minutos?: unknown } {
   try {
-    const conf = JSON.parse(readFileSync(join(carpeta, 'drafsoy-trabajo.json'), 'utf-8')) as { comandos?: unknown }
-    return Array.isArray(conf.comandos) ? conf.comandos.filter((c): c is string => typeof c === 'string' && c.trim().length > 0) : []
+    return JSON.parse(readFileSync(join(carpeta, 'drafsoy-trabajo.json'), 'utf-8'))
   } catch {
-    return []
+    return {}
   }
 }
 
-const LIMITE_TRABAJO_MS = 30 * 60_000
+// Comandos que el trabajo puede ejecutar. Un "*" al final significa "con cualquier argumento" (p. ej. renderizar un video)
+function comandosPermitidos(carpeta: string): string[] {
+  const { comandos } = leerConfig(carpeta)
+  return Array.isArray(comandos) ? comandos.filter((c): c is string => typeof c === 'string' && c.trim().length > 0) : []
+}
+
+// 30 minutos salvo que el trabajo pida más (renderizar video tarda); nunca más de 2 horas
+function limiteTrabajoMs(carpeta: string): number {
+  const { limite_minutos } = leerConfig(carpeta)
+  const minutos = typeof limite_minutos === 'number' && limite_minutos > 0 ? Math.min(limite_minutos, 120) : 30
+  return minutos * 60_000
+}
 
 export async function trabajarEnCarpeta(trabajo: string, encargo: string): Promise<string> {
   if (!listarTrabajos().includes(trabajo)) throw new Error(`No existe el trabajo "${trabajo}" en ${carpetaTrabajos()}.`)
@@ -197,7 +215,8 @@ export async function trabajarEnCarpeta(trabajo: string, encargo: string): Promi
     'Trabajas para la agencia Drafsoy, en modo automático (nadie te va a responder preguntas). Responde en español.\n' +
     '- Trabaja solo dentro de esta carpeta. Si hay un PROMPT-*.md o un LEEME.md, léelos y síguelos.\n' +
     '- ANTES DE EMPEZAR: las herramientas de HubSpot (mcp__claude_ai_HubSpot__...) y de Meta Ads (mcp__claude_ai_Facebook__...) SÍ están conectadas, pero se cargan bajo demanda. Usa la búsqueda de herramientas (ToolSearch) con "HubSpot" y con "Facebook ads" para cargarlas. No digas que no hay conectores sin haberlas buscado.\n' +
-    `- Solo puedes ejecutar estos comandos, escritos EXACTAMENTE así y sin "cd" ni nada delante: ${comandosPermitidos(carpeta).join(' · ') || '(ninguno)'}.\n` +
+    `- Solo puedes ejecutar estos comandos, escritos EXACTAMENTE así y sin "cd" ni nada delante (un "*" significa que ahí van los argumentos que necesites): ${comandosPermitidos(carpeta).join(' · ') || '(ninguno)'}.\n` +
+    '- Si hay un CLAUDE.md en la carpeta, sus pasos y reglas mandan.\n' +
     '- NO publiques nada (ni artifacts, ni Netlify, ni envíos): Rafa lo publica después de aprobarlo. Sáltate ese paso.\n' +
     '- Si te falta un dato que solo Rafa puede darte, no lo inventes: detente y explica exactamente qué falta.\n' +
     '- Si un script de verificación falla o los números no cuadran, no fuerces nada: explica qué no cuadra.\n' +
@@ -220,10 +239,11 @@ export async function trabajarEnCarpeta(trabajo: string, encargo: string): Promi
     )
     let salida = ''
     let errores = ''
+    const limite = limiteTrabajoMs(carpeta)
     const reloj = setTimeout(() => {
       proceso.kill()
-      reject(new Error('El trabajo tardó más de 30 minutos y se detuvo.'))
-    }, LIMITE_TRABAJO_MS)
+      reject(new Error(`El trabajo tardó más de ${limite / 60_000} minutos y se detuvo.`))
+    }, limite)
     proceso.stdout.on('data', (d) => (salida += d))
     proceso.stderr.on('data', (d) => (errores += d))
     proceso.on('error', () => {

@@ -124,8 +124,8 @@ async function producirTrabajo(
     herramientas.push({
       name: 'trabajar_en_carpeta',
       description:
-        'Abre Claude Code dentro de la carpeta de un trabajo (por ejemplo un reporte) para actualizar sus archivos con datos reales de HubSpot y Meta Ads. ' +
-        'Sigue el instructivo de la carpeta, solo edita dentro de ella y NUNCA publica. Puede tardar varios minutos. ' +
+        'Abre Claude Code dentro de la carpeta de un trabajo: actualizar un reporte con datos reales de HubSpot y Meta Ads, o editar un video (Draf-ads: a partir del audio de Rafa arma y renderiza el video). ' +
+        'Sigue el instructivo de la carpeta, solo edita dentro de ella y NUNCA publica. Puede tardar varios minutos (un video, hasta una hora). ' +
         'En "encargo" pon el pedido completo de Rafa, con todos los datos que haya dado (cifras, fechas, capturas descritas).',
       input_schema: {
         type: 'object',

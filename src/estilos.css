@@ -1,9 +1,22 @@
 @import 'tailwindcss';
 
-/* Paleta y tipografía estilo videojuego cartoon */
+/* Dashboard claro: fondo gris muy suave, tarjetas blancas, barra oscura y acento lima.
+   Los colores "de juego" (noche, oro…) se quedan para las etiquetas dentro del mapa 3D. */
 @theme {
   --font-juego: 'Luckiest Guy', system-ui, sans-serif;
-  --font-texto: 'Nunito', system-ui, sans-serif;
+  --font-texto: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --color-fondo: #eceef4;
+  --color-tarjeta: #ffffff;
+  --color-suave: #f4f5f9;
+  --color-linea: #e5e7ee;
+  --color-tinta: #1d2030;
+  --color-tinta-suave: #6d7286;
+  --color-barra: #1f2130;
+  --color-lima: #d4f36b;
+  --color-lima-osc: #7f9c1b;
+  --color-violeta: #8b7cf6;
+  --color-violeta-suave: #efecff;
 
   --color-noche: #1b1f4b;
   --color-panel: #262b66;
@@ -25,13 +38,22 @@ body,
 }
 
 body {
-  background: var(--color-noche);
-  color: white;
+  background: var(--color-fondo);
+  color: var(--color-tinta);
+  word-spacing: 0.1em; /* esta tipografía deja muy poco espacio entre palabras */
   font-family: var(--font-texto);
   user-select: none;
 }
 
-/* Texto grueso con borde, como los títulos del juego */
+/* Tarjeta del dashboard */
+.tarjeta {
+  background: var(--color-tarjeta);
+  border: 1px solid var(--color-linea);
+  border-radius: 24px;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 8px 24px rgb(16 24 40 / 0.04);
+}
+
+/* Texto grueso con borde, como los títulos del juego (solo dentro del mapa 3D) */
 .titulo-juego {
   font-family: var(--font-juego);
   letter-spacing: 0.02em;
@@ -86,6 +108,6 @@ body {
   width: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgb(255 255 255 / 0.25);
+  background: rgb(29 32 48 / 0.15);
   border-radius: 8px;
 }

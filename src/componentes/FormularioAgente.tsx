@@ -3,6 +3,7 @@ import { usarDatos } from '@/datos/DatosProvider'
 import { ACCIONES_EXTERNAS, HERRAMIENTAS, MODELOS } from '@/datos/catalogo'
 import type { Agente } from '@/datos/tipos'
 import { Boton, Subtitulo, claseCampo } from './ui'
+import SelectorFoto from './SelectorFoto'
 
 // La "plantilla" de agente. Sirve para editar uno existente y (en el Paso 8) para crear uno nuevo.
 export type DatosAgente = Pick<
@@ -72,7 +73,7 @@ export default function FormularioAgente({ inicial, textoBoton, cuentasIniciales
         <div className="grid grid-cols-2 gap-3">
 
           <Campo texto="Color del personaje">
-            <input type="color" value={datos.color} onChange={(e) => cambiar('color', e.target.value)} className="h-10 w-full cursor-pointer rounded-xl bg-panel-claro" />
+            <input type="color" value={datos.color} onChange={(e) => cambiar('color', e.target.value)} className="h-10 w-full cursor-pointer rounded-xl bg-suave" />
           </Campo>
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -121,7 +122,7 @@ export default function FormularioAgente({ inicial, textoBoton, cuentasIniciales
                   type="button"
                   key={c.id}
                   onClick={() => setCuentas((l) => (lleva ? l.filter((x) => x !== c.id) : [...l, c.id]))}
-                  className={`rounded-lg border-2 px-3 py-1.5 text-sm font-black transition ${lleva ? 'border-white text-noche' : 'border-white/20 bg-black/30 text-white/60'}`}
+                  className={`rounded-lg border-2 px-3 py-1.5 text-sm font-bold transition ${lleva ? 'border-violeta bg-violeta-suave text-tinta' : 'border-linea bg-suave text-tinta-suave'}`}
                   style={lleva ? { background: c.color } : undefined}
                 >
                   {lleva ? '✓ ' : ''}
@@ -135,7 +136,7 @@ export default function FormularioAgente({ inicial, textoBoton, cuentasIniciales
           <Subtitulo>Herramientas</Subtitulo>
           <div className="space-y-1">
             {HERRAMIENTAS.map((h) => (
-              <label key={h.id} className="flex cursor-pointer items-center gap-2 rounded-lg bg-panel-claro px-3 py-2 text-sm font-bold">
+              <label key={h.id} className="flex cursor-pointer items-center gap-2 rounded-lg bg-suave px-3 py-2 text-sm font-bold">
                 <input type="checkbox" checked={datos.herramientas.includes(h.id)} onChange={() => alternarHerramienta(h.id)} className="h-4 w-4 accent-oro" />
                 {h.texto}
               </label>
@@ -146,26 +147,25 @@ export default function FormularioAgente({ inicial, textoBoton, cuentasIniciales
           <Subtitulo>Acciones que necesitan tu aprobación</Subtitulo>
           <div className="space-y-1">
             {ACCIONES_EXTERNAS.map((a) => (
-              <div key={a.id} className="flex items-center gap-2 rounded-lg bg-black/20 px-3 py-2 text-sm font-bold text-white/70">
+              <div key={a.id} className="flex items-center gap-2 rounded-lg bg-suave px-3 py-2 text-sm font-bold text-tinta/80">
                 🔒 {a.texto}
               </div>
             ))}
           </div>
-          <p className="mt-1 text-xs text-white/40">Siempre activas: ningún agente puede hacer esto sin que lo apruebes.</p>
+          <p className="mt-1 text-xs text-tinta-suave/70">Siempre activas: ningún agente puede hacer esto sin que lo apruebes.</p>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Campo texto="Skin avatar (.png)">
-            <input value={datos.skin_avatar ?? ''} onChange={(e) => cambiar('skin_avatar', e.target.value || null)} placeholder="Luego" className={claseCampo} />
-          </Campo>
-          <Campo texto="Skin 3D (.glb)">
-            <input value={datos.skin_modelo ?? ''} onChange={(e) => cambiar('skin_modelo', e.target.value || null)} placeholder="Luego" className={claseCampo} />
-          </Campo>
+        <div>
+          <Subtitulo>Foto del empleado</Subtitulo>
+          <SelectorFoto valor={datos.skin_avatar} alCambiar={(foto) => cambiar('skin_avatar', foto)} />
         </div>
+        <Campo texto="Skin 3D (nombre de la skin, si no es la de su nombre)">
+          <input value={datos.skin_modelo ?? ''} onChange={(e) => cambiar('skin_modelo', e.target.value || null)} placeholder="Por ejemplo: midas" className={claseCampo} />
+        </Campo>
         <div className="flex items-center gap-3 pt-2">
           <Boton type="submit" disabled={guardando}>
             {guardando ? 'Guardando…' : textoBoton}
           </Boton>
-          {mensaje && <span className={`font-bold ${mensaje.startsWith('Error') ? 'text-alerta' : 'text-vida'}`}>{mensaje}</span>}
+          {mensaje && <span className={`font-bold ${mensaje.startsWith('Error') ? 'text-alerta' : 'text-emerald-600'}`}>{mensaje}</span>}
         </div>
       </div>
     </form>
@@ -175,7 +175,7 @@ export default function FormularioAgente({ inicial, textoBoton, cuentasIniciales
 function Campo({ texto, children }: { texto: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-black tracking-wider text-white/60 uppercase">{texto}</span>
+      <span className="mb-1 block text-xs font-bold tracking-wider text-tinta-suave uppercase">{texto}</span>
       {children}
     </label>
   )

@@ -36,22 +36,21 @@ export default function Ajustes() {
     <Pantalla>
       <Titulo>Ajustes</Titulo>
       <div className="mt-6 grid max-w-3xl gap-4">
-        <Tarjeta>
-          <Subtitulo>Gasto de IA este mes</Subtitulo>
-          <BarraEscudo ancho="w-full" />
-        </Tarjeta>
+        <div className="rounded-2xl bg-barra p-5 text-white">
+          <BarraEscudo />
+        </div>
 
         {/* Interruptor general: el equipo se pone a trabajar solo en cuanto tiene tareas */}
         <Tarjeta className="flex items-center justify-between gap-4">
           <div>
             <Subtitulo>Trabajo automático</Subtitulo>
-            <p className="text-sm text-white/70">
+            <p className="text-sm text-tinta/80">
               {ajustes?.trabajo_automatico ? 'El equipo empieza solo las tareas que le asignan.' : 'Pausado: nadie empieza tareas nuevas hasta que lo actives.'}
             </p>
           </div>
           <button
             onClick={() => ajustes && supabase.from('ajustes').update({ trabajo_automatico: !ajustes.trabajo_automatico }).eq('dueno', ajustes.dueno).then(({ error }) => error && alert(`No se pudo guardar: ${error.message}`))}
-            className={`relative h-9 w-16 shrink-0 rounded-full border-2 border-white/30 transition ${ajustes?.trabajo_automatico ? 'bg-vida' : 'bg-black/40'}`}
+            className={`relative h-9 w-16 shrink-0 rounded-full border-2 border-linea transition ${ajustes?.trabajo_automatico ? 'bg-emerald-500' : 'bg-linea'}`}
             title="Activar o pausar el trabajo automático"
           >
             <span className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-all ${ajustes?.trabajo_automatico ? 'left-8' : 'left-1'}`} />
@@ -87,7 +86,7 @@ export default function Ajustes() {
           </div>
           <div className="flex items-center gap-3">
             <Boton onClick={guardar}>Guardar</Boton>
-            {mensaje && <span className={`font-bold ${mensaje.startsWith('Error') ? 'text-alerta' : 'text-vida'}`}>{mensaje}</span>}
+            {mensaje && <span className={`font-bold ${mensaje.startsWith('Error') ? 'text-alerta' : 'text-emerald-600'}`}>{mensaje}</span>}
           </div>
         </Tarjeta>
 
@@ -138,7 +137,7 @@ function TarjetaGoogle() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <Subtitulo>Google (Drive, Calendar y Gmail)</Subtitulo>
-          <p className="text-sm text-white/70">
+          <p className="text-sm text-tinta/80">
             {!estado
               ? 'Comprobando…'
               : !estado.configurado
@@ -148,9 +147,9 @@ function TarjetaGoogle() {
                   : 'Sin conectar. Al conectar podrás aprobar que los agentes dejen documentos en tu Drive, agenden reuniones y envíen correos.'}
           </p>
           {estado?.faltaGmail && !ocupado && (
-            <p className="text-sm font-bold text-oro">Falta el permiso nuevo de Gmail: pulsa "Dar permiso de Gmail" y marca todas las casillas.</p>
+            <p className="text-sm font-bold text-amber-700">Falta el permiso nuevo de Gmail: pulsa "Dar permiso de Gmail" y marca todas las casillas.</p>
           )}
-          {ocupado && <p className="text-sm text-oro">Se abrió tu navegador: elige tu cuenta y acepta los permisos.</p>}
+          {ocupado && <p className="text-sm text-amber-700">Se abrió tu navegador: elige tu cuenta y acepta los permisos.</p>}
         </div>
         {estado?.conectado && estado.faltaGmail ? (
           <Boton disabled={ocupado} onClick={conectar}>

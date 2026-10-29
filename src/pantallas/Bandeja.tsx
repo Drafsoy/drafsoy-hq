@@ -32,7 +32,7 @@ export default function Bandeja() {
     <Pantalla>
       <div className="mb-6 pr-12">
         <Titulo color="#3fb6ff">Bandeja de aprobaciones</Titulo>
-        <p className="text-white/70">
+        <p className="text-tinta/80">
           Todo pasa primero por {supervisor?.nombre ?? 'tu supervisor'} y luego por ti. Nada sale al mundo exterior sin tu visto bueno.
         </p>
         <Boton variante="gris" className="mt-3 text-sm" onClick={crearPrueba}>
@@ -61,10 +61,10 @@ export default function Bandeja() {
           </Subtitulo>
           <div className="mb-8 space-y-2">
             {enRevision.map((a) => (
-              <div key={a.id} className="flex items-center gap-3 rounded-xl bg-morado/20 px-4 py-2 text-sm">
+              <div key={a.id} className="flex items-center gap-3 rounded-xl bg-violeta-suave px-4 py-2 text-sm">
                 <span className="animate-pulse">🔎</span>
                 <span className="flex-1 font-bold">{a.titulo}</span>
-                <span className="text-xs text-white/60">
+                <span className="text-xs text-tinta-suave">
                   {nombreAgente(a.agente_id)} · {nombreCliente(a.cliente_id)}
                 </span>
               </div>
@@ -77,15 +77,15 @@ export default function Bandeja() {
       <div className="space-y-2">
         {historial.length === 0 && <Vacio texto="Aún no has decidido nada." />}
         {historial.map((a) => (
-          <div key={a.id} className="rounded-xl bg-black/25 px-4 py-2 text-sm">
+          <div key={a.id} className="rounded-xl bg-suave px-4 py-2 text-sm">
             <div className="flex items-center gap-3">
               <Etiqueta {...ESTADOS_APROBACION[a.estado]} />
               <span className="flex-1 font-bold">{a.titulo}</span>
-              <span className="text-xs text-white/40">{new Date(a.resuelto_en ?? a.creado_en).toLocaleString('es')}</span>
+              <span className="text-xs text-tinta-suave/70">{new Date(a.resuelto_en ?? a.creado_en).toLocaleString('es')}</span>
             </div>
-            {a.comentario && <p className="mt-1 text-white/50 italic">“{a.comentario}”</p>}
+            {a.comentario && <p className="mt-1 text-tinta-suave italic">“{a.comentario}”</p>}
             {(a.estado === 'ejecutada' || a.estado === 'fallida') && a.resultado && (
-              <p className={`mt-1 text-xs ${a.estado === 'fallida' ? 'text-alerta' : 'text-vida'}`}>
+              <p className={`mt-1 text-xs ${a.estado === 'fallida' ? 'text-alerta' : 'text-emerald-600'}`}>
                 ⚙️ {String(a.resultado.mensaje ?? '')}
                 {typeof a.resultado.enlace === 'string' && (
                   <a href={a.resultado.enlace} target="_blank" rel="noreferrer" className="ml-2 font-bold text-cielo underline">
@@ -123,31 +123,31 @@ function TarjetaAprobacion({ aprobacion, agente, cliente, contenido }: { aprobac
   }
 
   return (
-    <Tarjeta className="border-oro/70">
+    <Tarjeta className="border-amber-300">
       <div className="mb-2">
-        <p className="titulo-juego text-xl">{aprobacion.titulo}</p>
-        <p className="text-sm text-white/70">
-          {agente ?? 'Agente'} {cliente ? `· ${cliente}` : ''} · quiere: <b className="text-oro">{accion}</b>
+        <p className="text-xl">{aprobacion.titulo}</p>
+        <p className="text-sm text-tinta/80">
+          {agente ?? 'Agente'} {cliente ? `· ${cliente}` : ''} · quiere: <b className="text-violeta">{accion}</b>
         </p>
-        <p className="text-xs text-white/40">{new Date(aprobacion.creado_en).toLocaleString('es')}</p>
+        <p className="text-xs text-tinta-suave/70">{new Date(aprobacion.creado_en).toLocaleString('es')}</p>
       </div>
       {aprobacion.nota_supervisor && (
-        <p className="mb-2 rounded-lg border border-vida/40 bg-vida/10 px-3 py-2 text-sm">
-          <b className="text-vida">✅ Revisado:</b> {aprobacion.nota_supervisor}
+        <p className="mb-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm">
+          <b className="text-emerald-600">✅ Revisado:</b> {aprobacion.nota_supervisor}
         </p>
       )}
-      <dl className="mb-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-xl bg-black/30 p-3 text-sm">
+      <dl className="mb-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-xl bg-suave p-3 text-sm">
         {Object.entries(aprobacion.detalle).map(([clave, valor]) => (
           <div key={clave} className="contents">
-            <dt className="font-black text-white/50">{clave.replaceAll('_', ' ')}</dt>
+            <dt className="font-bold text-tinta-suave">{clave.replaceAll('_', ' ')}</dt>
             <dd className="whitespace-pre-wrap">{typeof valor === 'string' ? valor : JSON.stringify(valor)}</dd>
           </div>
         ))}
       </dl>
       {contenido && (
-        <details className="mb-3 rounded-xl bg-black/30 p-3 text-sm">
-          <summary className="cursor-pointer font-black text-white/70">Ver lo que se subirá al Drive</summary>
-          <p className="mt-2 max-h-64 overflow-y-auto text-xs whitespace-pre-wrap text-white/85 select-text">{contenido}</p>
+        <details className="mb-3 rounded-xl bg-suave p-3 text-sm">
+          <summary className="cursor-pointer font-bold text-tinta/80">Ver lo que se subirá al Drive</summary>
+          <p className="mt-2 max-h-64 overflow-y-auto text-xs whitespace-pre-wrap text-tinta/80 select-text">{contenido}</p>
         </details>
       )}
       <input

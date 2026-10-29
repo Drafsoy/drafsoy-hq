@@ -34,7 +34,7 @@ export default function NuevoCliente() {
     <Pantalla>
       <div className="mb-5 pr-12">
         <Titulo color="#5ad15a">Nuevo cliente</Titulo>
-        <p className="text-white/70">Una cuenta nueva para la agencia. Luego podrás guardar su memoria (tono, público, ofertas…).</p>
+        <p className="text-tinta/80">Una cuenta nueva para la agencia. Luego podrás guardar su memoria (tono, público, ofertas…).</p>
       </div>
       <form onSubmit={crear} className="space-y-4">
         <label className="block">
@@ -53,7 +53,7 @@ export default function NuevoCliente() {
                 type="button"
                 key={c}
                 onClick={() => setColor(c)}
-                className={`h-9 w-9 rounded-lg border-[3px] transition ${color === c ? 'scale-110 border-white' : 'border-transparent'}`}
+                className={`h-9 w-9 rounded-lg border-[3px] transition ${color === c ? 'scale-110 border-tinta' : 'border-transparent'}`}
                 style={{ background: c }}
               />
             ))}
@@ -69,7 +69,7 @@ export default function NuevoCliente() {
                   type="button"
                   key={a.id}
                   onClick={() => setEquipo((l) => (lleva ? l.filter((x) => x !== a.id) : [...l, a.id]))}
-                  className={`rounded-lg border-2 px-3 py-1.5 text-sm font-black ${lleva ? 'border-white text-noche' : 'border-white/20 bg-black/30 text-white/60'}`}
+                  className={`rounded-lg border-2 px-3 py-1.5 text-sm font-bold ${lleva ? 'border-violeta bg-violeta-suave text-tinta' : 'border-linea bg-suave text-tinta-suave'}`}
                   style={lleva ? { background: a.color } : undefined}
                 >
                   {lleva ? '✓ ' : ''}

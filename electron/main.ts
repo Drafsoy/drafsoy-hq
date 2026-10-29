@@ -48,6 +48,11 @@ function crearVentana(): void {
         await ventana.webContents.executeJavaScript(`window.__verAgente && window.__verAgente(${JSON.stringify(process.env.DRAFSOY_CAPTURA_AGENTE)})`)
         await new Promise((r) => setTimeout(r, 2500))
       }
+      // O una pantalla concreta para la 3ª captura, p. ej. {"pantalla":"bandeja"}
+      if (n === 3 && process.env.DRAFSOY_CAPTURA_RUTA) {
+        await ventana.webContents.executeJavaScript(`window.__ir && window.__ir(${process.env.DRAFSOY_CAPTURA_RUTA})`)
+        await new Promise((r) => setTimeout(r, 2500))
+      }
       const imagen = await ventana.webContents.capturePage()
       writeFileSync(rutaCaptura.replace('.png', `-${n}.png`), imagen.toPNG())
       if (n >= 3) clearInterval(intervalo)

@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { supabase } from '@/datos/supabase'
 
-const claseCampo = 'w-full rounded-xl bg-black/30 px-4 py-3 font-bold outline-none focus:ring-4 focus:ring-oro'
+const claseCampo = 'w-full rounded-xl bg-suave px-4 py-3 font-bold outline-none focus:ring-4 focus:ring-violeta/30'
 const claseBoton =
-  'titulo-juego w-full rounded-xl border-b-4 border-yellow-700 bg-oro py-3 text-2xl text-noche transition hover:brightness-110 disabled:opacity-60'
+  'w-full rounded-full bg-lima py-3 text-base font-semibold text-tinta transition hover:brightness-95 disabled:opacity-60'
 
 // Entrar con correo y contraseña. Si la olvidaste: te llega un código de 6 cifras por correo
 // y aquí mismo pones la contraseña nueva (sin enlaces, que en una app de escritorio no funcionan).
@@ -63,10 +63,11 @@ export default function Login() {
   }
 
   return (
-    <div className="flex h-full items-center justify-center bg-gradient-to-b from-cielo to-sky-200">
-      <form onSubmit={enviar} className="panel-juego w-96 space-y-4 p-8">
-        <h1 className="titulo-juego text-center text-4xl text-oro">Drafsoy HQ</h1>
-        <p className="text-center text-sm text-white/70">
+    <div className="flex h-full items-center justify-center bg-fondo">
+      <form onSubmit={enviar} className="tarjeta w-96 space-y-4 p-8">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-lima text-xl font-extrabold text-tinta">D</div>
+        <h1 className="text-center text-3xl font-bold tracking-tight text-tinta">Drafsoy HQ</h1>
+        <p className="text-center text-sm text-tinta/80">
           {modo === 'entrar' ? 'Entra para abrir tu oficina' : modo === 'olvide' ? 'Te enviaremos un código a tu correo' : 'Pega el enlace del correo y pon tu contraseña nueva'}
         </p>
         <input type="email" required placeholder="Tu correo" value={correo} onChange={(e) => setCorreo(e.target.value)} disabled={modo === 'codigo'} className={claseCampo} />
@@ -91,25 +92,25 @@ export default function Login() {
             className={claseCampo}
           />
         )}
-        {aviso && <p className="rounded-lg bg-vida/20 px-3 py-2 text-sm font-bold text-vida">{aviso}</p>}
-        {error && <p className="rounded-lg bg-alerta/20 px-3 py-2 text-sm font-bold text-alerta">{error}</p>}
+        {aviso && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-600">{aviso}</p>}
+        {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-bold text-alerta">{error}</p>}
         <button disabled={ocupado} className={claseBoton}>
           {ocupado ? 'Un momento…' : modo === 'entrar' ? '¡A jugar!' : modo === 'olvide' ? 'Enviar código' : 'Cambiar y entrar'}
         </button>
         <button
           type="button"
           onClick={() => cambiar(modo === 'entrar' ? 'olvide' : 'entrar')}
-          className="w-full text-center text-sm font-bold text-sky-200 hover:underline"
+          className="w-full text-center text-sm font-bold text-violeta hover:underline"
         >
           {modo === 'entrar' ? '¿Olvidaste tu contraseña?' : 'Volver a entrar con mi contraseña'}
         </button>
         {modo === 'olvide' && (
-          <button type="button" onClick={() => cambiar('codigo')} className="w-full text-center text-xs text-white/60 hover:underline">
+          <button type="button" onClick={() => cambiar('codigo')} className="w-full text-center text-xs text-tinta-suave hover:underline">
             Ya tengo un enlace o un código en mi correo
           </button>
         )}
         {modo === 'codigo' && (
-          <button type="button" onClick={() => cambiar('olvide')} className="w-full text-center text-xs text-white/60 hover:underline">
+          <button type="button" onClick={() => cambiar('olvide')} className="w-full text-center text-xs text-tinta-suave hover:underline">
             No me llegó nada: enviar otro correo
           </button>
         )}

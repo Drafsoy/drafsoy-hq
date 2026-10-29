@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { supabase } from '@/datos/supabase'
 import { usarDatos } from '@/datos/DatosProvider'
 import { usarRuta } from '@/navegacion'
-import { Boton, Titulo, claseCampo } from '@/componentes/ui'
+import { Avatar, Boton, Titulo, claseCampo } from '@/componentes/ui'
 
 // Chat con la recepcionista o, si llega agenteId, chat directo con ese empleado
 export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
@@ -41,16 +41,16 @@ export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-4 border-b-2 border-white/15 bg-black/20 py-4 pr-16 pl-6">
-        <span className="h-12 w-10 rounded-md border-4 border-black/40" style={{ background: recepcionista?.color ?? '#ffc93c' }} />
+      <div className="flex items-center gap-4 border-b-2 border-linea bg-suave py-4 pr-16 pl-6">
+        <Avatar nombre={nombre} color={recepcionista?.color ?? '#ffc93c'} foto={recepcionista?.skin_avatar ?? null} tam={48} />
         <div>
           <Titulo color="#ffc93c">{nombre}</Titulo>
-          <p className="text-sm text-white/60">
+          <p className="text-sm text-tinta-suave">
             {empleado ? `Habla con ${nombre} sobre sus cuentas y sus tareas.` : 'Dime qué necesitas y se lo paso a quien lleva esa cuenta.'}
           </p>
         </div>
         {empleado && (
-          <button onClick={() => ir({ pantalla: 'agente', id: empleado.id })} className="ml-auto text-sm font-bold text-sky-300 hover:underline">
+          <button onClick={() => ir({ pantalla: 'agente', id: empleado.id })} className="ml-auto text-sm font-bold text-violeta hover:underline">
             Ver ficha
           </button>
         )}
@@ -58,7 +58,7 @@ export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
 
       <div className="flex-1 space-y-3 overflow-y-auto px-6 py-5">
         {delCanal.length === 0 && (
-          <div className="space-y-2 text-center text-white/50">
+          <div className="space-y-2 text-center text-tinta-suave">
             {empleado ? (
               <>
                 <p>Pregúntale lo que quieras, por ejemplo:</p>
@@ -79,20 +79,20 @@ export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
             <div
               className={`max-w-[80%] rounded-2xl px-4 py-2 whitespace-pre-wrap ${
                 m.rol === 'usuario'
-                  ? 'rounded-br-sm bg-escudo text-white'
+                  ? 'rounded-br-sm bg-tinta text-white'
                   : m.rol === 'sistema'
-                    ? 'bg-black/30 text-sm text-white/60 italic'
-                    : 'rounded-bl-sm bg-white/15'
+                    ? 'bg-suave text-sm text-tinta-suave italic'
+                    : 'rounded-bl-sm bg-suave'
               }`}
             >
               <TextoConFormato texto={m.contenido} />
-              {m.tarea_id && <span className="mt-1 block text-[11px] font-black text-oro">🪂 Tarea creada</span>}
+              {m.tarea_id && <span className="mt-1 block text-[11px] font-bold text-lima-osc">🪂 Tarea creada</span>}
             </div>
           </div>
         ))}
         {pensando && (
           <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-sm bg-white/15 px-4 py-2 text-white/70">
+            <div className="rounded-2xl rounded-bl-sm bg-suave px-4 py-2 text-tinta/80">
               <span className="animate-pulse">{nombre} está escribiendo…</span>
             </div>
           </div>
@@ -100,8 +100,8 @@ export default function ChatRecepcion({ agenteId }: { agenteId?: string }) {
         <div ref={final} />
       </div>
 
-      {error && <p className="mx-6 mb-2 rounded-lg bg-alerta/20 px-3 py-2 text-sm font-bold text-alerta">{error}</p>}
-      <form onSubmit={enviar} className="flex gap-2 border-t-2 border-white/15 bg-black/20 px-6 py-4">
+      {error && <p className="mx-6 mb-2 rounded-lg bg-rose-50 px-3 py-2 text-sm font-bold text-alerta">{error}</p>}
+      <form onSubmit={enviar} className="flex gap-2 border-t-2 border-linea bg-suave px-6 py-4">
         <input
           value={texto}
           onChange={(e) => setTexto(e.target.value)}

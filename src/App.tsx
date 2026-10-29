@@ -4,7 +4,8 @@ import { supabase, supabaseConfigurado } from '@/datos/supabase'
 import { DatosProvider, usarDatos } from '@/datos/DatosProvider'
 import { ContextoRuta, type Ruta } from '@/navegacion'
 import BarraLateral from '@/componentes/BarraLateral'
-import HUD from '@/componentes/HUD'
+import BarraIconos from '@/componentes/BarraIconos'
+import BarraSuperior from '@/componentes/BarraSuperior'
 import PanelLateral from '@/componentes/PanelLateral'
 import Orquestador from '@/componentes/Orquestador'
 import Escena from '@/mundo3d/Escena'
@@ -61,63 +62,63 @@ function OficinaLista() {
   // Solo en desarrollo: permite a las capturas automáticas abrir la ficha de un agente
   useEffect(() => {
     if (!import.meta.env.DEV) return
-    ;(window as unknown as { __verAgente?: (n: string) => void }).__verAgente = (nombre: string) => {
+    const w = window as unknown as { __verAgente?: (n: string) => void; __ir?: (r: Ruta) => void }
+    w.__verAgente = (nombre: string) => {
       const a = agentes.find((x) => x.nombre.toLowerCase() === nombre.toLowerCase())
       if (a) ir({ pantalla: 'agente', id: a.id })
     }
+    w.__ir = ir
   }, [agentes])
 
-  // En el mundo se ve la barra lateral; al abrir un panel se aparta para dejar ver la oficina.
-  const enMundo = ruta.pantalla === 'mundo'
+  const panel = (() => {
+    switch (ruta.pantalla) {
+      case 'cliente':
+        return { ancho: 620, contenido: <FichaCliente id={ruta.id} />, clave: ruta.id }
+      case 'agente':
+        return { ancho: 760, contenido: <FichaAgente id={ruta.id} />, clave: ruta.id }
+      case 'bandeja':
+        return { ancho: 640, contenido: <Bandeja />, clave: 'bandeja' }
+      case 'chat':
+        return { ancho: 560, contenido: <ChatRecepcion agenteId={ruta.agenteId} />, clave: ruta.agenteId ?? 'recepcion' }
+      case 'nuevoAgente':
+        return { ancho: 760, contenido: <NuevoAgente />, clave: 'nuevoAgente' }
+      case 'nuevoCliente':
+        return { ancho: 580, contenido: <NuevoCliente />, clave: 'nuevoCliente' }
+      case 'ajustes':
+        return { ancho: 620, contenido: <Ajustes />, clave: 'ajustes' }
+      default:
+        return null
+    }
+  })()
 
+  // Dashboard: barra de iconos, barra de arriba, el mapa 3D como tarjeta central y una columna a la derecha
+  // (el resumen del día o, si abres algo, su ficha).
   return (
     <ContextoRuta.Provider value={{ ruta, ir }}>
-      <div className="relative h-full overflow-hidden bg-cielo">
-        <div className="absolute inset-0">
-          <Escena />
+      <div className="flex h-full gap-4 bg-fondo p-4">
+        <BarraIconos />
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
+          <BarraSuperior />
+          <div className="flex min-h-0 flex-1 gap-4">
+            <div className="relative min-w-0 flex-1 overflow-hidden rounded-3xl bg-cielo shadow-[0_8px_24px_rgb(16_24_40/0.08)]">
+              <div className="absolute inset-0">
+                <Escena />
+              </div>
+              <span className="pointer-events-none absolute top-4 left-4 flex items-center gap-2 rounded-full bg-white/85 px-3 py-1.5 text-xs font-semibold text-tinta backdrop-blur">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> Oficina en vivo
+              </span>
+              {error && <p className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full bg-alerta px-3 py-1 text-sm font-semibold text-white">{error}</p>}
+            </div>
+            {panel ? (
+              <PanelLateral key={panel.clave} ancho={panel.ancho}>
+                {panel.contenido}
+              </PanelLateral>
+            ) : (
+              <BarraLateral />
+            )}
+          </div>
         </div>
-
         <Orquestador />
-        {enMundo && <BarraLateral />}
-        <HUD barraVisible={enMundo} />
-
-        {ruta.pantalla === 'cliente' && (
-          <PanelLateral key={ruta.id} ancho={600}>
-            <FichaCliente id={ruta.id} />
-          </PanelLateral>
-        )}
-        {ruta.pantalla === 'agente' && (
-          <PanelLateral key={ruta.id} ancho={760}>
-            <FichaAgente id={ruta.id} />
-          </PanelLateral>
-        )}
-        {ruta.pantalla === 'bandeja' && (
-          <PanelLateral ancho={620}>
-            <Bandeja />
-          </PanelLateral>
-        )}
-        {ruta.pantalla === 'chat' && (
-          <PanelLateral key={ruta.agenteId ?? 'recepcion'} ancho={540}>
-            <ChatRecepcion agenteId={ruta.agenteId} />
-          </PanelLateral>
-        )}
-        {ruta.pantalla === 'nuevoAgente' && (
-          <PanelLateral ancho={760}>
-            <NuevoAgente />
-          </PanelLateral>
-        )}
-        {ruta.pantalla === 'nuevoCliente' && (
-          <PanelLateral ancho={560}>
-            <NuevoCliente />
-          </PanelLateral>
-        )}
-        {ruta.pantalla === 'ajustes' && (
-          <PanelLateral ancho={600}>
-            <Ajustes />
-          </PanelLateral>
-        )}
-
-        {error && <p className="absolute top-4 left-1/2 -translate-x-1/2 rounded-lg bg-alerta px-3 py-1 text-sm font-bold">{error}</p>}
       </div>
     </ContextoRuta.Provider>
   )
@@ -125,8 +126,8 @@ function OficinaLista() {
 
 function PantallaCarga({ texto }: { texto: string }) {
   return (
-    <div className="flex h-full items-center justify-center bg-noche">
-      <p className="titulo-juego text-3xl text-oro">{texto}</p>
+    <div className="flex h-full items-center justify-center bg-fondo">
+      <p className="text-2xl font-bold text-tinta">{texto}</p>
     </div>
   )
 }

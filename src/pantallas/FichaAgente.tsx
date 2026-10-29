@@ -4,7 +4,7 @@ import { clientesDeAgente, usarDatos } from '@/datos/DatosProvider'
 import { usarRuta } from '@/navegacion'
 import { ESTADOS_AGENTE, TAREA_ABIERTA, type Agente, type Tarea } from '@/datos/tipos'
 import FormularioAgente from '@/componentes/FormularioAgente'
-import { Boton, Etiqueta, Pantalla, Subtitulo, Tarjeta, Titulo, Vacio, claseCampo } from '@/componentes/ui'
+import { Avatar, Boton, Etiqueta, Pantalla, Subtitulo, Tarjeta, Titulo, Vacio, claseCampo } from '@/componentes/ui'
 
 export default function FichaAgente({ id }: { id: string }) {
   const datos = usarDatos()
@@ -27,10 +27,10 @@ export default function FichaAgente({ id }: { id: string }) {
   return (
     <Pantalla>
       <div className="mb-6 flex items-center gap-5">
-        <span className="h-20 w-16 rounded-xl border-4 border-black/40" style={{ background: agente.color }} />
+        <Avatar nombre={agente.nombre} color={agente.color} foto={agente.skin_avatar} tam={80} />
         <div className="flex-1">
           <Titulo>{agente.nombre}</Titulo>
-          <p className="text-white/60">
+          <p className="text-tinta-suave">
             {agente.rol}
           </p>
           <div className="mt-1 flex flex-wrap gap-1">
@@ -39,7 +39,7 @@ export default function FichaAgente({ id }: { id: string }) {
             ))}
           </div>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col items-end gap-2 pr-12">
           <Etiqueta {...ESTADOS_AGENTE[agente.estado]} />
           <Boton variante="azul" onClick={() => ir(agente.es_recepcionista ? { pantalla: 'chat' } : { pantalla: 'chat', agenteId: agente.id })}>
             💬 Hablar con {agente.nombre}
@@ -95,8 +95,8 @@ export default function FichaAgente({ id }: { id: string }) {
 function Dato({ valor, texto }: { valor: string | number; texto: string }) {
   return (
     <Tarjeta className="text-center">
-      <p className="titulo-juego text-3xl text-oro">{valor}</p>
-      <p className="text-xs font-black tracking-widest text-white/50 uppercase">{texto}</p>
+      <p className="text-3xl font-bold tracking-tight text-tinta">{valor}</p>
+      <p className="text-xs font-bold tracking-widest text-tinta-suave uppercase">{texto}</p>
     </Tarjeta>
   )
 }
@@ -128,11 +128,11 @@ function TareaParaRafa({ tarea, agente, otrasPendientes }: { tarea: Tarea; agent
   return (
     <Tarjeta>
       <p className="mb-2 font-bold">{tarea.titulo}</p>
-      {tarea.revision && <p className="rounded-lg bg-oro/15 px-3 py-2 text-sm whitespace-pre-wrap text-oro select-text">{tarea.revision}</p>}
+      {tarea.revision && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm whitespace-pre-wrap text-amber-800 select-text">{tarea.revision}</p>}
       {tarea.resultado && (
-        <details className="mt-2 rounded-lg bg-black/30 px-3 py-2">
-          <summary className="cursor-pointer text-sm font-black text-sky-300">📄 Ver entregable</summary>
-          <p className="mt-1 max-h-72 overflow-y-auto text-sm whitespace-pre-wrap text-white/85 select-text">{tarea.resultado}</p>
+        <details className="mt-2 rounded-lg bg-suave px-3 py-2">
+          <summary className="cursor-pointer text-sm font-bold text-violeta">📄 Ver entregable</summary>
+          <p className="mt-1 max-h-72 overflow-y-auto text-sm whitespace-pre-wrap text-tinta/80 select-text">{tarea.resultado}</p>
         </details>
       )}
       <textarea

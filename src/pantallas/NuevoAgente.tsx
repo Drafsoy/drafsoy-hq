@@ -31,7 +31,7 @@ export default function NuevoAgente() {
     <Pantalla>
       <div className="mb-5 pr-12">
         <Titulo color="#ffc93c">Contratar empleado</Titulo>
-        <p className="text-white/70">Elige una plantilla de rol y ajústala. Tendrá su propia oficina en el edificio.</p>
+        <p className="text-tinta/80">Elige una plantilla de rol y ajústala. Tendrá su propia oficina en el edificio.</p>
       </div>
 
       <Subtitulo>Plantilla de rol</Subtitulo>
@@ -40,8 +40,8 @@ export default function NuevoAgente() {
           <button
             key={p.id}
             onClick={() => setPlantillaId(p.id)}
-            className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-left text-sm font-black transition ${
-              p.id === plantillaId ? 'border-white bg-white/15' : 'border-white/10 bg-black/25 hover:border-white/40'
+            className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-left text-sm font-bold transition ${
+              p.id === plantillaId ? 'border-violeta bg-violeta-suave' : 'border-linea bg-suave hover:border-violeta'
             }`}
           >
             <span className="flex h-8 w-8 items-center justify-center rounded-lg text-lg" style={{ background: p.color }}>

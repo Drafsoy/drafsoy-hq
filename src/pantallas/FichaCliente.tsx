@@ -39,10 +39,10 @@ export default function FichaCliente({ id }: { id: string }) {
   return (
     <Pantalla>
       <div className="mb-6 flex items-center gap-4 pr-12">
-        <span className="h-12 w-12 rounded-xl border-4 border-black/30" style={{ background: cliente.color }} />
+        <span className="h-12 w-12 rounded-xl border-4 border-linea" style={{ background: cliente.color }} />
         <div>
           <Titulo color={cliente.color}>{cliente.nombre}</Titulo>
-          <p className="text-white/60">{cliente.descripcion ?? 'Cuenta de la agencia'}</p>
+          <p className="text-tinta-suave">{cliente.descripcion ?? 'Cuenta de la agencia'}</p>
         </div>
       </div>
 
@@ -52,13 +52,13 @@ export default function FichaCliente({ id }: { id: string }) {
         {equipo.map((a) => (
           <Tarjeta key={a.id} className="flex w-64 items-center gap-3">
             <button onClick={() => ir({ pantalla: 'agente', id: a.id })} className="flex flex-1 items-center gap-3 text-left">
-              <span className="h-12 w-10 rounded-md border-4 border-black/40" style={{ background: a.color }} />
+              <span className="h-12 w-10 rounded-md border-4 border-linea" style={{ background: a.color }} />
               <span className="flex-1">
-                <span className="titulo-juego block text-xl">{a.nombre}</span>
+                <span className="block text-xl">{a.nombre}</span>
                 <Etiqueta {...ESTADOS_AGENTE[a.estado]} />
               </span>
             </button>
-            <button onClick={() => quitar(a.id)} title="Quitar de esta cuenta" className="text-xs text-white/40 hover:text-alerta">
+            <button onClick={() => quitar(a.id)} title="Quitar de esta cuenta" className="text-xs text-tinta-suave/70 hover:text-alerta">
               ✕
             </button>
           </Tarjeta>
@@ -86,7 +86,7 @@ export default function FichaCliente({ id }: { id: string }) {
           onClick={() =>
             supabase.from('tareas').insert({ titulo: 'Tarea de prueba', cliente_id: id, agente_id: equipo[0]?.id ?? null, prioridad: 'media' }).then(avisarError)
           }
-          className="mb-2 text-xs font-black text-white/50 hover:text-oro"
+          className="mb-2 text-xs font-bold text-tinta-suave hover:text-violeta"
         >
           + Tarea de prueba 🪂
         </button>
@@ -95,9 +95,9 @@ export default function FichaCliente({ id }: { id: string }) {
         {COLUMNAS.map((col) => {
           const lista = tareasCliente.filter((t) => col.estados.includes(t.estado))
           return (
-            <div key={col.titulo} className="rounded-2xl bg-black/20 p-3">
-              <p className="titulo-juego mb-2 text-lg">
-                {col.titulo} <span className="text-white/40">{lista.length}</span>
+            <div key={col.titulo} className="rounded-2xl bg-suave p-3">
+              <p className="mb-2 text-lg">
+                {col.titulo} <span className="text-tinta-suave/70">{lista.length}</span>
               </p>
               <div className="space-y-2">
                 {lista.map((t) => (
@@ -110,16 +110,16 @@ export default function FichaCliente({ id }: { id: string }) {
       </div>
 
       <Subtitulo>Memoria del cliente</Subtitulo>
-      <p className="mb-3 text-sm text-white/50">Lo que el equipo debe saber siempre de este cliente: tono, público, ofertas, prohibiciones…</p>
+      <p className="mb-3 text-sm text-tinta-suave">Lo que el equipo debe saber siempre de este cliente: tono, público, ofertas, prohibiciones…</p>
       <div className="mb-3 space-y-2">
         {memoriaCliente.length === 0 && <Vacio texto="Sin memoria todavía." />}
         {memoriaCliente.map((m) => (
           <Tarjeta key={m.id} className="flex items-start gap-3">
             <div className="flex-1">
-              <p className="font-black text-oro">{m.clave}</p>
+              <p className="font-bold text-violeta">{m.clave}</p>
               <p className="text-sm whitespace-pre-wrap">{m.contenido}</p>
             </div>
-            <button onClick={() => supabase.from('memoria_cliente').delete().eq('id', m.id).then(avisarError)} className="text-xs text-white/40 hover:text-alerta">
+            <button onClick={() => supabase.from('memoria_cliente').delete().eq('id', m.id).then(avisarError)} className="text-xs text-tinta-suave/70 hover:text-alerta">
               Borrar
             </button>
           </Tarjeta>
@@ -134,30 +134,30 @@ function TarjetaTarea({ tarea }: { tarea: Tarea }) {
   const { agentes } = usarDatos()
   const agente = agentes.find((a) => a.id === tarea.agente_id)
   return (
-    <div className="rounded-xl border-2 border-white/10 bg-black/30 p-3 text-sm">
+    <div className="rounded-xl border-2 border-linea bg-suave p-3 text-sm">
       <div className="mb-1 flex items-start justify-between gap-2">
         <p className="font-bold">{tarea.titulo}</p>
         <Etiqueta {...PRIORIDADES[tarea.prioridad]} />
       </div>
-      <p className="text-xs text-white/50">
+      <p className="text-xs text-tinta-suave">
         {agente ? agente.nombre : 'Sin asignar'}
         {tarea.fecha_limite ? ` · vence ${new Date(tarea.fecha_limite + 'T00:00').toLocaleDateString('es')}` : ''}
       </p>
       {tarea.revision && (
-        <p className={`mt-2 rounded-lg px-2 py-1 text-xs whitespace-pre-wrap ${tarea.revision.startsWith('✅') ? 'bg-vida/15 text-vida' : 'bg-oro/15 text-oro'}`}>
+        <p className={`mt-2 rounded-lg px-2 py-1 text-xs whitespace-pre-wrap ${tarea.revision.startsWith('✅') ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-800'}`}>
           {tarea.revision}
         </p>
       )}
       {tarea.resultado && (
-        <details className="mt-2 rounded-lg bg-black/30 px-2 py-1">
-          <summary className="cursor-pointer text-xs font-black text-sky-300">📄 Ver entregable</summary>
-          <p className="mt-1 max-h-64 overflow-y-auto text-xs whitespace-pre-wrap text-white/85 select-text">{tarea.resultado}</p>
+        <details className="mt-2 rounded-lg bg-suave px-2 py-1">
+          <summary className="cursor-pointer text-xs font-bold text-violeta">📄 Ver entregable</summary>
+          <p className="mt-1 max-h-64 overflow-y-auto text-xs whitespace-pre-wrap text-tinta/80 select-text">{tarea.resultado}</p>
         </details>
       )}
       <select
         value={tarea.estado}
         onChange={(e) => supabase.from('tareas').update({ estado: e.target.value }).eq('id', tarea.id).then(avisarError)}
-        className="mt-2 w-full rounded-lg bg-black/40 px-2 py-1 text-xs font-bold"
+        className="mt-2 w-full rounded-lg bg-suave px-2 py-1 text-xs font-bold"
       >
         {Object.entries(ESTADOS_TAREA).map(([valor, { texto }]) => (
           <option key={valor} value={valor}>

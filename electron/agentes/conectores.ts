@@ -102,6 +102,7 @@ export async function consultarConector(conector: Conector, pregunta: string): P
   const instrucciones =
     `Eres un asistente de solo lectura de ${NOMBRE[conector]} para la agencia Drafsoy. Responde en español.\n` +
     'Usa únicamente las herramientas de consulta que tienes permitidas; no intentes crear, cambiar, pausar ni borrar nada.\n' +
+    `Esas herramientas (${SERVIDOR[conector]}...) están conectadas pero se cargan bajo demanda: búscalas primero con la búsqueda de herramientas (ToolSearch).\n` +
     'Devuelve los datos reales que encuentres (nombres, ids, fechas, cifras) de forma ordenada y breve. ' +
     'Si algo no se puede consultar o no existe, dilo claramente. No inventes datos.\n\n' +
     `Consulta: ${pregunta}`
@@ -184,6 +185,8 @@ export async function trabajarEnCarpeta(trabajo: string, encargo: string): Promi
     'Read',
     'Glob',
     'Grep',
+    // Las herramientas de HubSpot y Meta se cargan bajo demanda: hace falta poder buscarlas
+    'ToolSearch',
     'Edit(./**)',
     'Write(./**)',
     // El mismo comando exacto por las dos vías (en Windows Claude Code usa PowerShell)
@@ -193,6 +196,7 @@ export async function trabajarEnCarpeta(trabajo: string, encargo: string): Promi
   const instrucciones =
     'Trabajas para la agencia Drafsoy, en modo automático (nadie te va a responder preguntas). Responde en español.\n' +
     '- Trabaja solo dentro de esta carpeta. Si hay un PROMPT-*.md o un LEEME.md, léelos y síguelos.\n' +
+    '- ANTES DE EMPEZAR: las herramientas de HubSpot (mcp__claude_ai_HubSpot__...) y de Meta Ads (mcp__claude_ai_Facebook__...) SÍ están conectadas, pero se cargan bajo demanda. Usa la búsqueda de herramientas (ToolSearch) con "HubSpot" y con "Facebook ads" para cargarlas. No digas que no hay conectores sin haberlas buscado.\n' +
     `- Solo puedes ejecutar estos comandos, escritos EXACTAMENTE así y sin "cd" ni nada delante: ${comandosPermitidos(carpeta).join(' · ') || '(ninguno)'}.\n` +
     '- NO publiques nada (ni artifacts, ni Netlify, ni envíos): Rafa lo publica después de aprobarlo. Sáltate ese paso.\n' +
     '- Si te falta un dato que solo Rafa puede darte, no lo inventes: detente y explica exactamente qué falta.\n' +

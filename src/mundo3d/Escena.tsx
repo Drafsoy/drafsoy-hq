@@ -146,6 +146,8 @@ export default function Escena() {
 function Camara({ ruta }: { ruta: Ruta }) {
   const ref = useRef<ComponentRef<typeof CameraControls>>(null)
   const { agentes } = usarDatos()
+  // Empleado al que mirar: el de su ficha o el de su chat
+  const seguido = ruta.pantalla === 'agente' ? ruta.id : ruta.pantalla === 'chat' ? (ruta.agenteId ?? null) : null
 
   const objetivo = useMemo(() => {
     // Vista general: la oficina sin techo desde arriba, centrada en el hueco que deja la barra lateral
@@ -153,14 +155,14 @@ function Camara({ ruta }: { ruta: Ruta }) {
     // Con un panel abierto a la derecha, el objetivo se desplaza para que quede a la izquierda
     const verPunto = (x: number, z: number, cerca = 13) => ({ pos: [x + 5, cerca * 0.8, z + Z_OFICINA + cerca], mira: [x + 5, 1, z + Z_OFICINA] })
 
+    if (seguido) {
+      const agente = agentes.find((a) => a.id === seguido)
+      if (!agente) return general
+      const [x, z] = puestoDe(agente, agentes)
+      // Más desde arriba, para mirar por encima de la cristalera y los carteles
+      return { pos: [x + 3, 10, z + Z_OFICINA + 8.5], mira: [x + 3, 1.2, z + Z_OFICINA] }
+    }
     switch (ruta.pantalla) {
-      case 'agente': {
-        const agente = agentes.find((a) => a.id === ruta.id)
-        if (!agente) return general
-        const [x, z] = puestoDe(agente, agentes)
-        // Más desde arriba, para mirar por encima de la cristalera y los carteles
-        return { pos: [x + 3, 10, z + Z_OFICINA + 8.5], mira: [x + 3, 1.2, z + Z_OFICINA] }
-      }
       case 'cliente':
         return { pos: [12, 34, Z_OFICINA + 30], mira: [8, 0, Z_OFICINA] }
       case 'bandeja':
@@ -170,7 +172,7 @@ function Camara({ ruta }: { ruta: Ruta }) {
       default:
         return general
     }
-  }, [ruta, agentes])
+  }, [ruta, agentes, seguido])
 
   const clave = JSON.stringify(objetivo)
   useEffect(() => {
@@ -180,10 +182,10 @@ function Camara({ ruta }: { ruta: Ruta }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clave])
 
-  // Con un agente seleccionado, la cámara lo sigue mientras camina (el zoom y el giro son alrededor de él)
+  // Con un empleado seleccionado (ficha o chat), la cámara lo sigue mientras camina (el zoom y el giro son alrededor de él)
   useFrame(() => {
-    if (ruta.pantalla !== 'agente' || !ref.current) return
-    const p = posicionesAgentes.get(ruta.id)
+    if (!seguido || !ref.current) return
+    const p = posicionesAgentes.get(seguido)
     if (p) ref.current.moveTo(p.x + 3, p.y + 1.2, p.z, true)
   })
 

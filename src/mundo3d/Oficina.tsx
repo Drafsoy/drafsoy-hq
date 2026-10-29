@@ -786,10 +786,10 @@ function Mesa({
 
       {agente.estado === 'trabajando' && (
         <PantallaTrabajo>
-          <span className="text-[13px] font-black tracking-wider uppercase" style={{ color: clienteTarea?.color ?? '#ffc93c' }}>
+          <span className="text-[11px] font-bold tracking-wider uppercase" style={{ color: clienteTarea?.color ?? '#ffc93c' }}>
             {clienteTarea?.nombre ?? 'Trabajando'}
           </span>
-          <span className="max-w-[220px] truncate text-[15px] font-black">{tarea?.titulo ?? 'Trabajando…'}</span>
+          <span className="max-w-[200px] truncate text-[13px] font-semibold">{tarea?.titulo ?? 'Trabajando…'}</span>
         </PantallaTrabajo>
       )}
     </group>
@@ -798,7 +798,8 @@ function Mesa({
 
 function PantallaTrabajo({ children }: { children: ReactNode }) {
   return (
-    <Html position={[0, 3.4, 0.6]} center distanceFactor={22} zIndexRange={[25, 0]}>
+    // Más pequeño y más alto: así no tapa la vista ni la etiqueta del personaje cuando la cámara se acerca
+    <Html position={[0, 4.3, 0.6]} center distanceFactor={11} zIndexRange={[25, 0]}>
       <div className="pointer-events-none flex flex-col rounded-2xl bg-barra/90 px-3 py-1.5 whitespace-nowrap text-white shadow-[0_6px_18px_rgb(16_24_40/0.3)] backdrop-blur">
         <span className="text-[10px] font-semibold tracking-wider text-lima uppercase">Trabajando en</span>
         {children}

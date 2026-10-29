@@ -24,6 +24,16 @@ export interface AgenteCliente {
   creado_en: string
 }
 
+// Una tarea que el empleado se apunta solo cada semana. dia: 0 = domingo … 6 = sábado; hora "HH:MM" (hora de esta PC).
+// "ultima" es el día (AAAA-MM-DD) en que se apuntó por última vez, para no repetirla el mismo día.
+export interface TareaRecurrente {
+  texto: string
+  dia?: number
+  hora?: string
+  cliente_id?: string | null
+  ultima?: string
+}
+
 export interface Agente {
   id: string
   nombre: string
@@ -35,7 +45,7 @@ export interface Agente {
   herramientas: string[]
   modelo: string
   acciones_con_aprobacion: string[]
-  tareas_recurrentes: unknown[]
+  tareas_recurrentes: TareaRecurrente[]
   tope_gasto_usd: number
   estado: EstadoAgente
   es_recepcionista: boolean

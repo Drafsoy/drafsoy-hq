@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { usarDatos } from '@/datos/DatosProvider'
 import { ACCIONES_EXTERNAS, HERRAMIENTAS, MODELOS } from '@/datos/catalogo'
-import type { Agente } from '@/datos/tipos'
+import type { Agente, TareaRecurrente } from '@/datos/tipos'
 import { Boton, Subtitulo, claseCampo } from './ui'
 import SelectorFoto from './SelectorFoto'
 
@@ -32,9 +32,7 @@ export default function FormularioAgente({ inicial, textoBoton, cuentasIniciales
   const { clientes } = usarDatos()
   const [cuentas, setCuentas] = useState<string[]>(cuentasIniciales)
   const [datos, setDatos] = useState<DatosAgente>(inicial)
-  const [recurrentes, setRecurrentes] = useState(
-    (inicial.tareas_recurrentes as { texto?: string }[]).map((t) => t.texto ?? '').join('\n')
-  )
+  const [recurrentes, setRecurrentes] = useState<TareaRecurrente[]>(inicial.tareas_recurrentes ?? [])
   const [mensaje, setMensaje] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
 
@@ -46,11 +44,7 @@ export default function FormularioAgente({ inicial, textoBoton, cuentasIniciales
   async function enviar(e: FormEvent) {
     e.preventDefault()
     setGuardando(true)
-    const tareas_recurrentes = recurrentes
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean)
-      .map((texto) => ({ texto }))
+    const tareas_recurrentes = recurrentes.map((t) => ({ ...t, texto: t.texto.trim() })).filter((t) => t.texto)
     const error = await alGuardar({
       ...datos,
       tareas_recurrentes,
@@ -100,15 +94,10 @@ export default function FormularioAgente({ inicial, textoBoton, cuentasIniciales
         <Campo texto="Instrucciones (cómo trabaja este agente)">
           <textarea rows={6} value={datos.instrucciones} onChange={(e) => cambiar('instrucciones', e.target.value)} className={claseCampo} />
         </Campo>
-        <Campo texto="Tareas recurrentes (una por línea)">
-          <textarea
-            rows={3}
-            value={recurrentes}
-            onChange={(e) => setRecurrentes(e.target.value)}
-            placeholder={'Cada lunes: reporte semanal de campañas'}
-            className={claseCampo}
-          />
-        </Campo>
+        <div>
+          <span className="mb-1 block text-xs font-bold tracking-wider text-tinta-suave uppercase">Tareas que repite cada semana</span>
+          <Recurrentes lista={recurrentes} cambiar={setRecurrentes} />
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -178,5 +167,48 @@ function Campo({ texto, children }: { texto: string; children: React.ReactNode }
       <span className="mb-1 block text-xs font-bold tracking-wider text-tinta-suave uppercase">{texto}</span>
       {children}
     </label>
+  )
+}
+
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
+
+// Cada fila: qué día, a qué hora, para qué cliente y qué tiene que hacer. La app se la apunta sola mientras esté abierta.
+function Recurrentes({ lista, cambiar }: { lista: TareaRecurrente[]; cambiar: (l: TareaRecurrente[]) => void }) {
+  const { clientes } = usarDatos()
+  // Al cambiar una fila se borra "ultima", por si Rafa la mueve a otra hora del mismo día
+  const editar = (i: number, cambio: Partial<TareaRecurrente>) => cambiar(lista.map((t, j) => (j === i ? { ...t, ...cambio, ultima: undefined } : t)))
+  return (
+    <div className="space-y-2">
+      {lista.map((t, i) => (
+        <div key={i} className="space-y-2 rounded-xl bg-suave p-2">
+          <div className="flex gap-2">
+            <select value={t.dia ?? ''} onChange={(e) => editar(i, { dia: e.target.value === '' ? undefined : Number(e.target.value) })} className={claseCampo}>
+              <option value="">Sin día (no se repite)</option>
+              {DIAS.map((d, n) => (
+                <option key={d} value={n}>
+                  Cada {d}
+                </option>
+              ))}
+            </select>
+            <input type="time" value={t.hora ?? ''} onChange={(e) => editar(i, { hora: e.target.value })} className={`${claseCampo} w-32`} />
+            <button type="button" onClick={() => cambiar(lista.filter((_, j) => j !== i))} className="px-2 text-sm font-bold text-tinta-suave" title="Quitar">
+              ✕
+            </button>
+          </div>
+          <select value={t.cliente_id ?? ''} onChange={(e) => editar(i, { cliente_id: e.target.value || null })} className={claseCampo}>
+            <option value="">Sin cliente</option>
+            {clientes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nombre}
+              </option>
+            ))}
+          </select>
+          <textarea rows={3} value={t.texto} onChange={(e) => editar(i, { texto: e.target.value })} placeholder="Qué tiene que hacer" className={claseCampo} />
+        </div>
+      ))}
+      <Boton type="button" variante="gris" onClick={() => cambiar([...lista, { texto: '', dia: 1, hora: '09:00' }])}>
+        + Añadir tarea semanal
+      </Boton>
+    </div>
   )
 }

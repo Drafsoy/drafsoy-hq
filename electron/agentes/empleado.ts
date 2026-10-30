@@ -52,7 +52,7 @@ export async function trabajarTarea(tareaId: string, token: string): Promise<voi
   } catch (e) {
     await db.from('tareas').update({ estado: 'te_necesita', revision: `No pude terminarla: ${mensajeError(e)}` }).eq('id', tareaId)
     await db.from('agentes').update({ estado: 'te_necesita' }).eq('id', agente.id)
-    await db.from('mensajes').insert({ canal: agente.id, rol: 'asistente', contenido: `⚠️ No pude terminar "${tarea.titulo}": ${mensajeError(e)}`, tarea_id: tareaId })
+    await db.from('mensajes').insert({ canal: agente.id, rol: 'asistente', contenido: `⚠️ No pude terminar "${tarea.titulo}": ${mensajeError(e)}` })
     return
   } finally {
     await contador.registrar(db, agente.id, tareaId)

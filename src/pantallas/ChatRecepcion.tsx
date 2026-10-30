@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ClipboardEvent, type FormEvent } from 'react'
-import { Paperclip, X } from 'lucide-react'
+import { Check, Copy, Paperclip, X } from 'lucide-react'
 import { supabase } from '@/datos/supabase'
 import { usarDatos } from '@/datos/DatosProvider'
 import { usarRuta } from '@/navegacion'
@@ -110,7 +110,7 @@ export default function ChatRecepcion({ agenteId, embebido = false }: { agenteId
         {delCanal.map((m) => (
           <div key={m.id} className={`flex ${m.rol === 'usuario' ? 'justify-end' : 'justify-start'}`}>
             <div
-              className={`max-w-[80%] rounded-2xl px-4 py-2 whitespace-pre-wrap ${
+              className={`group max-w-[80%] rounded-2xl px-4 py-2 whitespace-pre-wrap select-text ${
                 m.rol === 'usuario'
                   ? 'rounded-br-sm bg-tinta text-white'
                   : m.rol === 'sistema'
@@ -125,6 +125,7 @@ export default function ChatRecepcion({ agenteId, embebido = false }: { agenteId
               )}
               <TextoConFormato texto={m.contenido} />
               {m.tarea_id && <span className="mt-1 block text-[11px] font-bold text-lima-osc">🪂 Tarea creada</span>}
+              <BotonCopiar texto={m.contenido} />
             </div>
           </div>
         ))}
@@ -182,6 +183,26 @@ export default function ChatRecepcion({ agenteId, embebido = false }: { agenteId
 }
 
 // Formato sencillo de los mensajes: **negrita** y listas con "- "
+// Copia el mensaje sin los ** del formato. Aparece al pasar el ratón por encima del mensaje.
+function BotonCopiar({ texto }: { texto: string }) {
+  const [copiado, setCopiado] = useState(false)
+  async function copiar() {
+    await navigator.clipboard.writeText(texto.replace(/\*\*/g, ''))
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 1500)
+  }
+  return (
+    <button
+      type="button"
+      onClick={copiar}
+      className={`mt-1 flex items-center gap-1 text-[11px] font-bold opacity-0 transition group-hover:opacity-70 hover:opacity-100 focus:opacity-100 ${copiado ? 'opacity-100' : ''}`}
+    >
+      {copiado ? <Check size={12} /> : <Copy size={12} />}
+      {copiado ? 'Copiado' : 'Copiar'}
+    </button>
+  )
+}
+
 function TextoConFormato({ texto }: { texto: string }) {
   return (
     <>

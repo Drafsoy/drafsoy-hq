@@ -305,8 +305,7 @@ async function aplicar(
       await db.from('mensajes').insert({
         canal: empleado,
         rol: 'asistente',
-        contenido: `⚠️ No pude cerrar "${tarea.titulo}": se devolvió varias veces y necesita tu criterio.\n${firma}${v.nota}`,
-        tarea_id: tarea.id as string
+        contenido: `⚠️ No pude cerrar "${tarea.titulo}": se devolvió varias veces y necesita tu criterio.\n${firma}${v.nota}`
       })
     }
     return
@@ -353,8 +352,7 @@ async function aplicar(
   await db.from('mensajes').insert({
     canal: empleado,
     rol: 'asistente',
-    contenido: `✅ Terminé "${tarea.titulo}". ${siguiente}${entregable ? `\n\n${entregable.slice(0, LARGO_AVISO)}${entregable.length > LARGO_AVISO ? '…\n\n(El resto está en la pestaña Tareas.)' : ''}` : ''}`,
-    tarea_id: tarea.id as string
+    contenido: `✅ Terminé "${tarea.titulo}". ${siguiente}${entregable ? `\n\n${entregable.slice(0, LARGO_AVISO)}${entregable.length > LARGO_AVISO ? '…\n\n(El resto está en la pestaña Tareas.)' : ''}` : ''}`
   })
 
   // Aviso en el chat de recepción para que Rafa se entere sin buscarlo

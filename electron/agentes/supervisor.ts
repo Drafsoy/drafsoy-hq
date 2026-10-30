@@ -272,6 +272,8 @@ async function revisarPropuestasYa(db: SupabaseClient, ids: string[]): Promise<v
   }
 }
 
+const LARGO_AVISO = 3000 // Letras del entregable que se copian en el chat del empleado
+
 // Aplica el veredicto: actualiza propuestas, tarea y estado del empleado
 async function aplicar(
   db: SupabaseClient,
@@ -299,6 +301,14 @@ async function aplicar(
       })
       .eq('id', tarea.id)
     await db.from('agentes').update({ estado: agotado ? 'te_necesita' : 'disponible' }).eq('id', empleado)
+    if (agotado) {
+      await db.from('mensajes').insert({
+        canal: empleado,
+        rol: 'asistente',
+        contenido: `⚠️ No pude cerrar "${tarea.titulo}": se devolvió varias veces y necesita tu criterio.\n${firma}${v.nota}`,
+        tarea_id: tarea.id as string
+      })
+    }
     return
   }
 
@@ -332,6 +342,20 @@ async function aplicar(
     .from('agentes')
     .update({ estado: enBandeja ? 'esperando_aprobacion' : teNecesita ? 'te_necesita' : 'disponible' })
     .eq('id', empleado)
+
+  // Aviso en el chat del empleado: Rafa ve ahí qué se hizo, si hay algo por aprobar y el entregable
+  const siguiente = enBandeja
+    ? `Te dejé ${enBandeja === 1 ? '1 acción' : `${enBandeja} acciones`} para aprobar en la bandeja.`
+    : teNecesita
+      ? `Hay algo que necesita tu decisión:\n${frenadas.join('\n')}`
+      : 'No hace falta que apruebes nada.'
+  const entregable = String(tarea.resultado ?? '').trim()
+  await db.from('mensajes').insert({
+    canal: empleado,
+    rol: 'asistente',
+    contenido: `✅ Terminé "${tarea.titulo}". ${siguiente}${entregable ? `\n\n${entregable.slice(0, LARGO_AVISO)}${entregable.length > LARGO_AVISO ? '…\n\n(El resto está en la pestaña Tareas.)' : ''}` : ''}`,
+    tarea_id: tarea.id as string
+  })
 
   // Aviso en el chat de recepción para que Rafa se entere sin buscarlo
   if (teNecesita) {

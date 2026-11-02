@@ -15,13 +15,20 @@ const hoyLocal = () => {
 }
 
 // Apunta las tareas recurrentes que tocan hoy y ya pasó su hora. Si la app estaba cerrada a esa hora, se apunta al abrirla (ese mismo día).
+// Lo ya apuntado en esta sesión de la app ("agente:texto:día"): los datos en pantalla pueden tardar en refrescarse
+const apuntadas = new Set<string>()
+
 async function apuntarRecurrentes(agentes: Agente[]) {
   const ahora = new Date()
   const hoy = hoyLocal()
   const minutos = ahora.getHours() * 60 + ahora.getMinutes()
   for (const a of agentes) {
-    const lista = a.tareas_recurrentes ?? []
+    if (!(a.tareas_recurrentes ?? []).some((t) => typeof t.dia === 'number' && t.dia === ahora.getDay())) continue
+    // Se lee la lista recién guardada, no la de pantalla (que puede ir un minuto atrasada y repetir la tarea)
+    const { data: fresco } = await supabase.from('agentes').select('tareas_recurrentes').eq('id', a.id).single()
+    const lista = ((fresco?.tareas_recurrentes ?? []) as Agente['tareas_recurrentes'])
     const tocan = lista.filter((t) => {
+      if (apuntadas.has(`${a.id}:${t.texto}:${hoy}`)) return false
       if (typeof t.dia !== 'number' || !t.hora || t.ultima === hoy || t.dia !== ahora.getDay()) return false
       const [h, m] = t.hora.split(':').map(Number)
       return minutos >= h * 60 + (m || 0)
@@ -32,6 +39,7 @@ async function apuntarRecurrentes(agentes: Agente[]) {
     const { error } = await supabase.from('agentes').update({ tareas_recurrentes: nueva }).eq('id', a.id)
     if (error) continue
     for (const t of tocan) {
+      apuntadas.add(`${a.id}:${t.texto}:${hoy}`)
       await supabase.from('tareas').insert({
         titulo: `🔁 ${t.texto.split('\n')[0].slice(0, 90)}`,
         descripcion: `Tarea semanal de ${a.nombre} (${hoy}).\n\n${t.texto}`,
@@ -64,7 +72,14 @@ export default function Orquestador() {
   agentesRef.current = agentes
   useEffect(() => {
     if (!ajustes?.trabajo_automatico) return
-    const revisar = () => apuntarRecurrentes(agentesRef.current).catch((e) => console.error('[recurrentes]', e))
+    let enMarcha = false // si una revisión tarda, la siguiente no se monta encima
+    const revisar = () => {
+      if (enMarcha) return
+      enMarcha = true
+      apuntarRecurrentes(agentesRef.current)
+        .catch((e) => console.error('[recurrentes]', e))
+        .finally(() => (enMarcha = false))
+    }
     revisar()
     const intervalo = setInterval(revisar, CADA_RELOJ_MS)
     return () => clearInterval(intervalo)

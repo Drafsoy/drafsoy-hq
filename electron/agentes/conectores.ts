@@ -215,6 +215,7 @@ export async function trabajarEnCarpeta(trabajo: string, encargo: string): Promi
     'Trabajas para la agencia Drafsoy, en modo automático (nadie te va a responder preguntas). Responde en español.\n' +
     '- Trabaja solo dentro de esta carpeta. Si hay un PROMPT-*.md o un LEEME.md, léelos y síguelos.\n' +
     '- ANTES DE EMPEZAR: las herramientas de HubSpot (mcp__claude_ai_HubSpot__...) y de Meta Ads (mcp__claude_ai_Facebook__...) SÍ están conectadas, pero se cargan bajo demanda. Usa la búsqueda de herramientas (ToolSearch) con "HubSpot" y con "Facebook ads" para cargarlas. No digas que no hay conectores sin haberlas buscado.\n' +
+    '- Si al buscarlas no aparecen o fallan, es que todavía se están conectando (pasa justo después de encender la PC): vuelve a buscarlas con ToolSearch hasta 3 veces antes de rendirte, y si aun así fallan copia el error exacto en tu resumen.\n' +
     `- Solo puedes ejecutar estos comandos, escritos EXACTAMENTE así y sin "cd" ni nada delante (un "*" significa que ahí van los argumentos que necesites): ${comandosPermitidos(carpeta).join(' · ') || '(ninguno)'}.\n` +
     '- Si hay un CLAUDE.md en la carpeta, sus pasos y reglas mandan.\n' +
     '- NO publiques nada (ni artifacts, ni Netlify, ni envíos): Rafa lo publica después de aprobarlo. Sáltate ese paso.\n' +

@@ -3,6 +3,8 @@ import { supabase } from './supabase'
 
 type ConId = { id: string }
 
+const RECARGA_MS = 60_000
+
 // Carga una tabla y la mantiene al día en tiempo real:
 // si cambias algo en el Mac, aparece aquí sin recargar.
 export function usarTabla<T extends ConId>(tabla: string, ordenarPor = 'creado_en') {
@@ -13,16 +15,22 @@ export function usarTabla<T extends ConId>(tabla: string, ordenarPor = 'creado_e
   useEffect(() => {
     let activo = true
 
-    supabase
-      .from(tabla)
-      .select('*')
-      .order(ordenarPor, { ascending: true })
-      .then(({ data, error }) => {
-        if (!activo) return
-        if (error) setError(error.message)
-        else setFilas((data ?? []) as T[])
-        setCargando(false)
-      })
+    const cargar = () =>
+      supabase
+        .from(tabla)
+        .select('*')
+        .order(ordenarPor, { ascending: true })
+        .then(({ data, error }) => {
+          if (!activo) return
+          if (error) setError(error.message)
+          else setFilas((data ?? []) as T[])
+          setCargando(false)
+        })
+    cargar()
+    // Red de seguridad: si la conexión en vivo se corta (p. ej. la PC se suspendió), se recarga cada minuto
+    // y al volver a la ventana, para que la pantalla y el trabajo automático no se queden con datos viejos
+    const intervalo = setInterval(cargar, RECARGA_MS)
+    window.addEventListener('focus', cargar)
 
     const canal = supabase
       .channel(`${tabla}-${Math.random().toString(36).slice(2)}`)
@@ -41,10 +49,15 @@ export function usarTabla<T extends ConId>(tabla: string, ordenarPor = 'creado_e
           return actuales.filter((f) => f.id !== vieja.id)
         })
       })
-      .subscribe()
+      .subscribe((estado) => {
+        // Al reconectarse se recarga todo: lo que cambió mientras estaba caída no llega por el canal
+        if (estado === 'SUBSCRIBED') cargar()
+      })
 
     return () => {
       activo = false
+      clearInterval(intervalo)
+      window.removeEventListener('focus', cargar)
       supabase.removeChannel(canal)
     }
   }, [tabla, ordenarPor])
